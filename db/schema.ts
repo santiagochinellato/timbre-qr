@@ -14,7 +14,7 @@ export const buildings = pgTable('buildings', {
 export const units = pgTable('units', {
     id: uuid('id').defaultRandom().primaryKey(),
     buildingId: uuid('building_id').references(() => buildings.id, { onDelete: 'cascade' }),
-    label: text('label').notNull(), // "4B"
+    label: text('label').notNull(), // "4b"
 });
 
 // 3. Residentes (Los receptores de WhatsApp)

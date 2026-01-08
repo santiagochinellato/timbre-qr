@@ -42,22 +42,22 @@ export class WhatsAppClient {
             return false;
         }
 
+        // 🚨 TEMPLATE DE PRODUCCIÓN (Pendiente de Aprobación por Meta)
+        /*
         const payload = {
             messaging_product: "whatsapp",
-            to: to, // Ensure this is E.164
+            to: to,
             type: "template",
             template: {
-                name: "access_alert_v2", // Must match Meta template name exactly
-                language: { code: "es_AR" }, // Adjust based on your template setup
+                name: "access_alert_v2",
+                language: { code: "es_AR" },
                 components: [
                     {
                         type: "header",
                         parameters: [
                             {
                                 type: "image",
-                                image: {
-                                    link: photoUrl
-                                }
+                                image: { link: photoUrl }
                             }
                         ]
                     },
@@ -71,7 +71,7 @@ export class WhatsAppClient {
                     {
                         type: "button",
                         sub_type: "quick_reply",
-                        index: "0", // First button (Open Door)
+                        index: "0",
                         parameters: [
                             {
                                 type: "payload",
@@ -80,6 +80,19 @@ export class WhatsAppClient {
                         ]
                     }
                 ]
+            }
+        };
+        */
+
+        // 🧪 TEMPLATE DE PRUEBA (Para verificar conexión mientras aprueban el otro)
+        // Nota: Los parámetros (visitorName, unitLabel, etc.) no se usan aquí.
+        const payload = {
+            messaging_product: "whatsapp",
+            to: to,
+            type: "template",
+            template: {
+                name: "hello_world",
+                language: { code: "en_US" }
             }
         };
 

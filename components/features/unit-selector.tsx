@@ -1,10 +1,9 @@
 "use client";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, startTransition, useState } from "react";
 import { ringDoorbell } from "@/app/actions/ring-doorbell";
+import { getUnits } from "@/app/actions/get-units";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-const units = ["4b"];
 
 export default function UnitSelector({
   image,
@@ -13,7 +12,13 @@ export default function UnitSelector({
   image: string;
   onReset: () => void;
 }) {
+  const [units, setUnits] = useState<string[]>([]);
   const [state, formAction, isPending] = useActionState(ringDoorbell, null);
+
+  useEffect(() => {
+    // Fetch units on mount
+    getUnits().then(setUnits);
+  }, []);
 
   useEffect(() => {
     if (state?.success) {
@@ -37,7 +42,9 @@ export default function UnitSelector({
         return;
       }
     }
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   };
 
   return (
