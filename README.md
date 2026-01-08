@@ -12,7 +12,17 @@ yarn dev
 pnpm dev
 # or
 bun dev
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
+
+> **Note for Windows Users**: This project is hosted in WSL. Ensure you run commands inside the WSL terminal or prefix them with `wsl.exe` (e.g., `wsl.exe npm run dev`).
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
