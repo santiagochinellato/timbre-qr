@@ -20,6 +20,7 @@ export const buildings = pgTable('buildings', {
     id: uuid('id').defaultRandom().primaryKey(),
     name: text('name').notNull(), // "Edificio Mitre"
     slug: text('slug').unique().notNull(), // "mitre-1234"
+    mqttTopic: text('mqtt_topic'),
     active: boolean('active').default(true),
 });
 

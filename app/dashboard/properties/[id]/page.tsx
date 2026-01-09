@@ -148,7 +148,10 @@ export default async function PropertyDetailPage({
                   {log.status === "opened" ? "Puerta Abierta" : "Timbre Tocado"}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-zinc-500 font-mono text-xs">
+              <div
+                className="flex items-center gap-1.5 text-zinc-500 font-mono text-xs"
+                suppressHydrationWarning
+              >
                 <Clock className="w-3 h-3" />
                 {log.createdAt
                   ? new Date(log.createdAt).toLocaleTimeString([], {
