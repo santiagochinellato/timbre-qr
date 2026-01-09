@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { User, Settings, Shield, LogOut } from "lucide-react";
+import { Settings, Shield, LogOut } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -8,9 +10,18 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-xl mx-auto space-y-8">
-      <h1 className="text-2xl font-bold text-white tracking-tight">
-        Mi Perfil
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white tracking-tight">
+          Mi Perfil
+        </h1>
+        <Image
+          src="/icons/GbellzWhite.webp"
+          alt="Logo"
+          width={40}
+          height={40}
+          className="opacity-50 object-contain"
+        />
+      </div>
 
       <div className="bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-6 flex items-center gap-6">
         <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center text-3xl font-bold text-cyan-500 border border-white/5">
@@ -21,7 +32,7 @@ export default async function ProfilePage() {
           <p className="text-zinc-500">{session.user.email}</p>
           <div className="flex gap-2 mt-2">
             <span className="px-2 py-1 rounded-md bg-white/5 text-xs text-zinc-400 border border-white/5 uppercase tracking-wider font-mono">
-              {session.user.role || "Resident"}
+              {(session.user as any).role || "Resident"}
             </span>
           </div>
         </div>
@@ -32,8 +43,16 @@ export default async function ProfilePage() {
           Configuración
         </h3>
         <div className="bg-zinc-900/30 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
-          <ListItem icon={Settings} label="Preferencias de Notificación" />
-          <ListItem icon={Shield} label="Seguridad y Clave" />
+          <ListItem
+            icon={Settings}
+            label="Preferencias de Notificación"
+            href="/dashboard/profile/notifications"
+          />
+          <ListItem
+            icon={Shield}
+            label="Seguridad y Clave"
+            href="/dashboard/profile/security"
+          />
         </div>
       </div>
 
@@ -45,9 +64,20 @@ export default async function ProfilePage() {
   );
 }
 
-function ListItem({ icon: Icon, label }: { icon: any; label: string }) {
+function ListItem({
+  icon: Icon,
+  label,
+  href,
+}: {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+}) {
   return (
-    <div className="p-4 flex items-center justify-between hover:bg-white/5 cursor-pointer transition-colors group">
+    <Link
+      href={href}
+      className="p-4 flex items-center justify-between hover:bg-white/5 cursor-pointer transition-colors group"
+    >
       <div className="flex items-center gap-3">
         <Icon className="w-5 h-5 text-zinc-500 group-hover:text-cyan-400 transition-colors" />
         <span className="text-zinc-300 group-hover:text-white transition-colors">
@@ -55,6 +85,6 @@ function ListItem({ icon: Icon, label }: { icon: any; label: string }) {
         </span>
       </div>
       {/* Chevron? */}
-    </div>
+    </Link>
   );
 }

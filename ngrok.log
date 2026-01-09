@@ -131,3 +131,5 @@ t=2026-01-09T12:43:47+0000 lvl=info msg="join connections" obj=join id=a4bf53013
 t=2026-01-09T12:47:31+0000 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=cf654cf5761f clientid=03581b6751ec3b6a79cb9ab3542e8a5e
 t=2026-01-09T12:47:34+0000 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=aa8571fc6945 clientid=03581b6751ec3b6a79cb9ab3542e8a5e
 t=2026-01-09T13:15:59+0000 lvl=info msg="update available" obj=updater
+t=2026-01-09T15:29:49+0000 lvl=info msg="received stop request" obj=app stopReq="{err:<nil> restart:false}"
+t=2026-01-09T15:29:49+0000 lvl=info msg="session closing" obj=tunnels.session err=nil

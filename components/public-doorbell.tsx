@@ -13,6 +13,7 @@ import { CameraHandle } from "@/components/features/camera-mirror";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { BellRing, Camera, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 const CameraMirror = dynamic(
   () => import("@/components/features/camera-mirror"),
@@ -91,6 +92,15 @@ export default function PublicDoorbell({
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/icons/GbellzWhite.webp"
+              alt="Gbellz Logo"
+              width={60}
+              height={60}
+              className="w-16 h-16 object-contain opacity-90 drop-shadow-md"
+            />
+          </div>
           <h1 className="text-4xl font-bold tracking-tight mb-2 drop-shadow-lg">
             {buildingName}
           </h1>

@@ -12,6 +12,7 @@ export const users = pgTable("user", {
   passwordHash: text("password_hash").notNull(), // Stores BCRYPT hash
   image: text("image"),
   role: roleEnum('role').default('user'),
+  emailDigest: boolean('email_digest').default(true), // Feature flag
   createdAt: timestamp("created_at").defaultNow(),
 });
 

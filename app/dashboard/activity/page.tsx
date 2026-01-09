@@ -1,10 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { accessLogs, units, buildings, userUnits } from "@/db/schema";
+import { accessLogs, units, userUnits } from "@/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { Clock, CheckCircle2, XCircle, BellRing } from "lucide-react";
+import { CheckCircle2, XCircle, BellRing, Activity } from "lucide-react";
 
 export default async function ActivityPage() {
   const session = await auth();
