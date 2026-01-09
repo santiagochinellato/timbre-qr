@@ -95,3 +95,14 @@ export const unitsRelations = relations(units, ({ one, many }) => ({
 export const buildingsRelations = relations(buildings, ({ many }) => ({
 	units: many(units),
 }));
+
+export const accessLogsRelations = relations(accessLogs, ({ one }) => ({
+    unit: one(units, {
+        fields: [accessLogs.unitId],
+        references: [units.id],
+    }),
+    opener: one(users, {
+        fields: [accessLogs.openedByUserId],
+        references: [users.id],
+    }),
+}));

@@ -32,8 +32,12 @@ export default async function ActivityPage() {
   const logs = await db.query.accessLogs.findMany({
     where: inArray(accessLogs.unitId, unitIds),
     with: {
-      // We could fetch related unit info if we set up relations in schema.ts properly
-      // For now, simpler query
+      unit: {
+        with: {
+          building: true,
+        },
+      },
+      opener: true,
     },
     orderBy: [desc(accessLogs.createdAt)],
     limit: 50,
@@ -63,15 +67,16 @@ export default async function ActivityPage() {
             >
               <div className="flex gap-4">
                 {/* Timestamp Column */}
-                <div className="flex flex-col items-center gap-1 min-w-[3rem] border-r border-white/5 pr-4">
+                <div className="flex flex-col items-center gap-1 min-w-[3rem] border-r border-white/5 pr-4 justify-start pt-1">
                   <span
                     className="text-lg font-bold text-zinc-300 font-mono"
                     suppressHydrationWarning
                   >
                     {log.createdAt
-                      ? new Date(log.createdAt).toLocaleTimeString([], {
+                      ? new Date(log.createdAt).toLocaleTimeString("es-AR", {
                           hour: "2-digit",
                           minute: "2-digit",
+                          timeZone: "America/Argentina/Buenos_Aires",
                         })
                       : "--:--"}
                   </span>
@@ -80,16 +85,17 @@ export default async function ActivityPage() {
                     suppressHydrationWarning
                   >
                     {log.createdAt
-                      ? new Date(log.createdAt).toLocaleDateString([], {
+                      ? new Date(log.createdAt).toLocaleDateString("es-AR", {
                           weekday: "short",
+                          timeZone: "America/Argentina/Buenos_Aires",
                         })
                       : ""}
                   </span>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="flex-1 min-w-0 flex flex-col gap-1">
+                  <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <StatusIcon status={log.status} />
                       <span
@@ -100,19 +106,61 @@ export default async function ActivityPage() {
                         {getStatusText(log.status)}
                       </span>
                     </div>
-                    {/* Optional: Add Unit Name here if joined */}
                   </div>
 
-                  {log.visitorPhotoUrl && (
-                    <div className="relative w-full h-32 rounded-lg overflow-hidden border border-white/5 mt-3">
-                      <Image
-                        src={log.visitorPhotoUrl}
-                        fill
-                        className="object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                        alt="Visitor"
-                      />
+                  {/* Location Details */}
+                  {log.unit && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-400 mb-2">
+                      <span className="font-medium text-zinc-300">
+                        {log.unit.building?.name || "Edificio"}
+                      </span>
+                      <span className="w-1 h-1 rounded-full bg-zinc-600" />
+                      <span>Unidad {log.unit.label}</span>
                     </div>
                   )}
+
+                  {/* Message or Authorizer */}
+                  {log.message ? (
+                    <div className="bg-zinc-800/50 border border-white/5 rounded-lg px-3 py-2 inline-block self-start mb-2">
+                      <p className="text-zinc-300 text-sm italic">
+                        &quot;{log.message}&quot;
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {/* Authorizer (Who opened it) */}
+                  {log.status === "opened" && log.opener && (
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-500/80 uppercase tracking-wide font-bold mb-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      </svg>
+                      <span>
+                        Autorizado por: {log.opener.name || "Usuario"}
+                      </span>
+                    </div>
+                  )}
+
+                  {log.visitorPhotoUrl &&
+                    !log.visitorPhotoUrl.startsWith("MSG:") && (
+                      <div className="relative w-full h-32 rounded-lg overflow-hidden border border-white/5 mt-1">
+                        <Image
+                          src={log.visitorPhotoUrl}
+                          fill
+                          className="object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                          alt="Visitor"
+                        />
+                      </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -139,11 +187,11 @@ function StatusIcon({ status }: { status: string | null }) {
 function getStatusText(status: string | null) {
   switch (status) {
     case "opened":
-      return "Acceso Concedido";
+      return "Acceso Permitido";
     case "ringing":
       return "Timbre Tocado";
     case "missed":
-      return "Llamada Perdida";
+      return "No Atendido";
     default:
       return "Evento";
   }

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { userUnits, units, buildings, accessLogs, users } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Battery, Activity, ShieldCheck, MapPin, Wifi } from "lucide-react";
 import Link from "next/link";
@@ -44,20 +44,28 @@ export default async function DashboardPage() {
   });
   const uniqueBuildings = Array.from(buildingsMap.values());
 
-  // 3. Fetch generic activity stats (from the first available unit for now)
-  // 3. Fetch generic activity stats (from the first available unit for now)
-  const primaryUnitId = uniqueBuildings[0]?.unitId;
-  const recentLogs = primaryUnitId
-    ? await db.query.accessLogs.findMany({
-        where: eq(accessLogs.unitId, primaryUnitId),
-        orderBy: [desc(accessLogs.createdAt)],
-        limit: 5,
-      })
-    : [];
+  // 3. Fetch generic activity stats for ALL units
+  const unitIds = allUserUnits.map((u) => u.unitId);
+
+  const recentLogs =
+    unitIds.length > 0
+      ? await db.query.accessLogs.findMany({
+          where: inArray(accessLogs.unitId, unitIds),
+          orderBy: [desc(accessLogs.createdAt)],
+          limit: 10,
+          with: {
+            unit: {
+              with: {
+                building: true,
+              },
+            },
+            opener: true,
+          },
+        })
+      : [];
 
   // 4. Check for ANY active ringing state across ALL units
   // We need to know which units are ringing to animate the correct building card
-  const unitIds = allUserUnits.map((u) => u.unitId);
 
   // Use a raw query or findMany with 'inArray' if available, or just fetch recent logs for all active units
   // For simplicity and to avoid importing 'inArray', let's just fetch active ringing logs
@@ -232,115 +240,79 @@ export default async function DashboardPage() {
           </div>
 
           <div className="space-y-4 flex-1">
-          <div className="space-y-4 flex-1">
-            {recentLogs.length === 0 ? (
-               // MOCK DATA RENDER (Fallback)
-                [
-                    {
-                        id: 'mock-1',
-                        status: 'ringing',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
-                        visitorPhotoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
-                        message: null
-                    },
-                    {
-                        id: 'mock-2',
-                        status: 'opened',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 25), // 25 mins ago
-                        visitorPhotoUrl: null,
-                        message: "Hola, soy del correo, dejo paquete."
-                    },
-                    {
-                        id: 'mock-3',
-                        status: 'missed',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-                        visitorPhotoUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
-                        message: "Vecino del 5to"
-                    },
-                    {
-                        id: 'mock-4',
-                        status: 'opened',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-                        visitorPhotoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
-                        message: null
-                    },
-                    {
-                        id: 'mock-5',
-                        status: 'ringing',
-                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 25), // 1 day ago
-                        visitorPhotoUrl: null,
-                        message: null
-                    }
-                ].map((log) => (
-                  <div key={log.id} className="flex items-start gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5 opacity-80 hover:opacity-100">
-                    {/* Avatar / Photo */}
-                    <div className="flex-shrink-0">
-                        {log.visitorPhotoUrl ? (
-                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 relative">
-                                <img 
-                                    src={log.visitorPhotoUrl} 
-                                    alt="Visitor" 
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                        ) : (
-                            <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 text-zinc-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                        )}
-                    </div>
+            {(() => {
+              const mockNow = Date.now();
+              const mockLogs = [
+                {
+                  id: "mock-1",
+                  status: "ringing",
+                  createdAt: new Date(mockNow - 1000 * 60 * 5),
+                  visitorPhotoUrl:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
+                  message: null,
+                  unit: { label: "2A", building: { name: "Edificio Demo" } },
+                  opener: null,
+                },
+                {
+                  id: "mock-2",
+                  status: "opened",
+                  createdAt: new Date(mockNow - 1000 * 60 * 25),
+                  visitorPhotoUrl: null,
+                  message: "Hola, soy del correo, dejo paquete.",
+                  unit: { label: "PB B", building: { name: "Cabañas" } },
+                  opener: { name: "Maria Gonzalez" },
+                },
+                {
+                  id: "mock-3",
+                  status: "missed",
+                  createdAt: new Date(mockNow - 1000 * 60 * 60 * 2),
+                  visitorPhotoUrl:
+                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop",
+                  message: "Vecino del 5to",
+                  unit: { label: "4C", building: { name: "Edificio Demo" } },
+                  opener: null,
+                },
+                {
+                  id: "mock-4",
+                  status: "opened",
+                  createdAt: new Date(mockNow - 1000 * 60 * 60 * 24),
+                  visitorPhotoUrl:
+                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
+                  message: null,
+                  unit: { label: "1A", building: { name: "Las Victorias" } },
+                  opener: { name: "Carlos Gomez" },
+                },
+                {
+                  id: "mock-5",
+                  status: "ringing",
+                  createdAt: new Date(mockNow - 1000 * 60 * 60 * 25),
+                  visitorPhotoUrl: null,
+                  message: null,
+                  unit: { label: "2A", building: { name: "Edificio Demo" } },
+                  opener: null,
+                },
+              ];
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                            <p className="text-white font-medium text-sm">
-                                {log.status === 'opened' ? (
-                                    <span className="text-emerald-400">Acceso Permitido</span>
-                                ) : log.status === 'ringing' ? (
-                                    <span className="text-amber-400">Timbre</span>
-                                ) : (
-                                    <span className="text-red-400">No Atendido</span>
-                                )}
-                            </p>
-                            <span className="text-xs text-zinc-500 whitespace-nowrap ml-2">
-                            {log.createdAt
-                                ? new Date(log.createdAt).toLocaleString("es-AR", {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    timeZone: "America/Argentina/Buenos_Aires",
-                                    })
-                                : "-"}
-                            </span>
-                        </div>
-                        
-                        {log.message ? (
-                            <div className="mt-1 flex items-start gap-2">
-                                <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-md line-clamp-2 italic">
-                                    "{log.message}"
-                                </span>
-                            </div>
-                        ) : (
-                            <p className="text-xs text-zinc-500 mt-0.5">
-                                {log.visitorPhotoUrl ? "Visitante con foto" : "Sin identificación visual"}
-                            </p>
-                        )}
-                    </div>
+              const displayLogs = recentLogs.length > 0 ? recentLogs : mockLogs;
+
+              if (displayLogs.length === 0) {
+                return (
+                  <div className="text-center text-zinc-500 py-10">
+                    No hay actividad reciente.
                   </div>
-                ))
-            ) : (
-              recentLogs.map((log) => (
+                );
+              }
+
+              return displayLogs.map((log: any) => (
                 <div
                   key={log.id}
-                  className="flex items-start gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
                 >
                   {/* Avatar / Photo */}
                   <div className="flex-shrink-0">
                     {log.visitorPhotoUrl &&
                     !log.visitorPhotoUrl.startsWith("MSG:") ? (
-                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 relative">
-                        {/* Handle standard images vs data urls */}
+                      <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 relative">
                         <img
                           src={log.visitorPhotoUrl}
                           alt="Visitor"
@@ -348,11 +320,11 @@ export default async function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 text-zinc-500">
+                      <div className="w-14 h-14 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 text-zinc-500">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
+                          width="24"
+                          height="24"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -360,7 +332,7 @@ export default async function DashboardPage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                           <circle cx="12" cy="7" r="4" />
                         </svg>
                       </div>
@@ -368,9 +340,10 @@ export default async function DashboardPage() {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <p className="text-white font-medium text-sm">
+                  <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    {/* Top Row: Status & Time */}
+                    <div className="flex justify-between items-center">
+                      <p className="font-bold text-base">
                         {log.status === "opened" ? (
                           <span className="text-emerald-400">
                             Acceso Permitido
@@ -381,7 +354,7 @@ export default async function DashboardPage() {
                           <span className="text-red-400">No Atendido</span>
                         )}
                       </p>
-                      <span className="text-xs text-zinc-500 whitespace-nowrap ml-2">
+                      <span className="text-xs text-zinc-500 whitespace-nowrap">
                         {log.createdAt
                           ? new Date(log.createdAt).toLocaleString("es-AR", {
                               hour: "2-digit",
@@ -394,23 +367,57 @@ export default async function DashboardPage() {
                       </span>
                     </div>
 
-                    {log.message ? (
-                      <div className="mt-1 flex items-start gap-2">
-                        <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-md line-clamp-2 italic">
-                          "{log.message}"
+                    {/* Middle Row: Location Details */}
+                    {log.unit && (
+                      <div className="flex items-center gap-2 text-xs text-zinc-400">
+                        <span className="font-medium text-zinc-300">
+                          {log.unit.building?.name || "Edificio"}
                         </span>
+                        <span className="w-1 h-1 rounded-full bg-zinc-600" />
+                        <span>Unidad {log.unit.label}</span>
+                      </div>
+                    )}
+
+                    {/* Bottom Row: Message or Authorizer */}
+                    {log.message ? (
+                      <div className="mt-1 bg-zinc-800/50 border border-white/5 rounded-lg px-3 py-1.5 inline-block self-start">
+                        <p className="text-zinc-300 text-xs italic">
+                          &quot;{log.message}&quot;
+                        </p>
                       </div>
                     ) : (
                       <p className="text-xs text-zinc-500 mt-0.5">
                         {log.visitorPhotoUrl
-                          ? "Visitante con foto"
-                          : "Sin identificación visual"}
+                          ? "Visitante con foto capturada"
+                          : "Sin registro visual"}
                       </p>
+                    )}
+
+                    {/* Authorizer (Who opened it) */}
+                    {log.status === "opened" && log.opener && (
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-500/80 uppercase tracking-wide font-bold">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        <span>
+                          Autorizado por: {log.opener.name || "Usuario"}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
-              ))
-            )}
+              ));
+            })()}
           </div>
         </div>
       </div>
