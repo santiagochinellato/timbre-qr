@@ -1,8 +1,10 @@
-import "dotenv/config";
-import { db } from "../db";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+// import { db } from "../db";
 import { sql } from "drizzle-orm";
 
 async function main() {
+  const { db } = await import("../db");
   console.log("🔥 RESET TOTAL DE LA BASE DE DATOS...");
   
   try {

@@ -1,74 +1,91 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import { ChevronRight, Lock, Unlock } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  useAnimation,
+} from "framer-motion";
+import { ChevronRight, Unlock } from "lucide-react";
 
-export const SlideToOpen = ({ onUnlock }: { onUnlock: () => void }) => {
+export const SlideToOpen = ({
+  onUnlock,
+  isLoading,
+}: {
+  onUnlock: () => void;
+  isLoading?: boolean;
+}) => {
   const [unlocked, setUnlocked] = useState(false);
   const x = useMotionValue(0);
-  const maxDrag = 220; // Ancho máximo de deslizamiento
+  const controls = useAnimation();
+  const maxDrag = 220;
 
-  // Transformaciones visuales basadas en el arrastre
-  const opacity = useTransform(x, [0, maxDrag - 20], [1, 0]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const bgGlow = useTransform(
-    x,
-    [0, maxDrag],
-    ["rgba(6, 182, 212, 0)", "rgba(6, 182, 212, 0.4)"]
-  );
+  const opacity = useTransform(x, [0, maxDrag / 2], [1, 0]);
+  const bgWidth = useTransform(x, [0, maxDrag], ["0%", "100%"]);
 
   const handleDragEnd = () => {
-    if (x.get() > maxDrag - 10) {
+    if (x.get() > maxDrag * 0.7) {
+      // If dragged more than 70%, snap to end and unlock
       setUnlocked(true);
+      controls.start({ x: maxDrag });
       onUnlock();
+    } else {
+      // Otherwise reset
+      controls.start({ x: 0 });
     }
   };
 
+  useEffect(() => {
+    if (isLoading) {
+      setUnlocked(true);
+      controls.start({ x: maxDrag });
+    }
+  }, [isLoading, controls]);
+
   return (
-    <motion.div
-      style={{
-        backgroundColor: "#18181b",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.1)",
-      }}
-      className="relative w-full h-16 rounded-full flex items-center p-1 overflow-hidden"
+    <div
+      className={`relative w-full h-16 rounded-full flex items-center p-1 overflow-hidden transition-colors duration-300 ${
+        unlocked ? "bg-emerald-500/20" : "bg-zinc-900 border border-zinc-700"
+      }`}
     >
-      {/* Fondo de Progreso (Glow Effect) */}
+      {/* Dynamic Background */}
       <motion.div
-        style={{ width: x, backgroundColor: "rgba(6, 182, 212, 0.2)" }}
-        className="absolute left-0 h-full rounded-full blur-md"
+        className="absolute left-0 top-0 bottom-0 bg-emerald-500/20 z-0"
+        style={{ width: bgWidth }}
       />
 
-      {/* Texto de Instrucción */}
+      {/* Label */}
       <motion.div
         style={{ opacity }}
-        className="absolute w-full text-center pointer-events-none"
+        className="absolute w-full text-center z-0 pointer-events-none"
       >
-        <span className="text-zinc-500 text-sm font-medium tracking-wide font-sans uppercase">
-          Deslizar para abrir
+        <span className="text-zinc-500 text-sm font-medium tracking-wide uppercase animate-pulse">
+          {unlocked ? "Abriendo..." : "Deslizar para abrir"}
         </span>
       </motion.div>
 
-      {/* El Knob Deslizante */}
+      {/* Draggable Knob */}
       <motion.div
-        drag="x"
+        drag={!unlocked ? "x" : false}
         dragConstraints={{ left: 0, right: maxDrag }}
         dragElastic={0.05}
         dragMomentum={false}
         onDragEnd={handleDragEnd}
+        animate={controls}
         style={{ x }}
-        className="relative z-10 w-14 h-14 bg-zinc-900 rounded-full flex items-center justify-center border border-zinc-700 shadow-2xl cursor-grab active:cursor-grabbing group"
+        className={`relative z-10 w-14 h-14 rounded-full flex items-center justify-center shadow-lg cursor-grab active:cursor-grabbing border ${
+          unlocked
+            ? "bg-emerald-500 border-emerald-400"
+            : "bg-zinc-800 border-zinc-600 group hover:border-cyan-500/50"
+        }`}
       >
         {unlocked ? (
-          <Unlock className="w-6 h-6 text-emerald-400" />
+          <Unlock className="w-6 h-6 text-white" />
         ) : (
-          <div className="flex items-center justify-center">
-            <ChevronRight className="w-6 h-6 text-cyan-400 animate-pulse" />
-            {/* Efecto sutil de brillo interno */}
-            <div className="absolute inset-0 rounded-full bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+          <ChevronRight className="w-6 h-6 text-zinc-400" />
         )}
       </motion.div>
-    </motion.div>
+    </div>
   );
 };

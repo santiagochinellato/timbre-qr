@@ -29,6 +29,7 @@ export const units = pgTable('units', {
     id: uuid('id').defaultRandom().primaryKey(),
     buildingId: uuid('building_id').references(() => buildings.id, { onDelete: 'cascade' }),
     label: text('label').notNull(), // "4B"
+    mqttTopic: text('mqtt_topic'), // Optional: if unit has its own lock
 });
 
 // 3. MANY-TO-MANY RELATION (Users <-> Units)
@@ -52,12 +53,45 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
     createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ...
+
 // 5. ACCESS LOGS
 export const accessLogs = pgTable('access_logs', {
     id: uuid('id').defaultRandom().primaryKey(),
     unitId: uuid('unit_id').references(() => units.id),
     visitorPhotoUrl: text('visitor_photo_url'),
+    message: text('message'), // Fallback if no photo
     status: text('status').default('ringing'), // 'ringing', 'opened', 'missed'
     openedByUserId: text('opened_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow(),
 });
+
+// RELATIONS
+import { relations } from "drizzle-orm";
+
+export const usersRelations = relations(users, ({ many }) => ({
+	units: many(userUnits),
+}));
+
+export const userUnitsRelations = relations(userUnits, ({ one }) => ({
+	user: one(users, {
+		fields: [userUnits.userId],
+		references: [users.id],
+	}),
+	unit: one(units, {
+		fields: [userUnits.unitId],
+		references: [units.id],
+	}),
+}));
+
+export const unitsRelations = relations(units, ({ one, many }) => ({
+	building: one(buildings, {
+		fields: [units.buildingId],
+		references: [buildings.id],
+	}),
+    residents: many(userUnits),
+}));
+
+export const buildingsRelations = relations(buildings, ({ many }) => ({
+	units: many(units),
+}));

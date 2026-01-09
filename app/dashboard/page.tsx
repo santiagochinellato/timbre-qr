@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { userUnits, units, buildings, accessLogs } from "@/db/schema";
+import { userUnits, units, buildings, accessLogs, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Battery, Activity, ShieldCheck, MapPin, Wifi } from "lucide-react";
@@ -11,8 +11,19 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login");
 
   // Fetch user's primary unit (first one found)
-  // In a real app we might have a 'default' flag or active selection
-  const userUnit = await db
+  // 1. Validate User Exists (Session might be stale after DB reset)
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+  });
+
+  if (!dbUser) {
+    // Session is valid (signed correctly) but user is gone from DB.
+    // Force redirect to logout to clear the bad session.
+    redirect("/logout");
+  }
+
+  // 2. Fetch ALL units to group them
+  const allUserUnits = await db
     .select({
       unitId: units.id,
       unitLabel: units.label,
@@ -22,20 +33,42 @@ export default async function DashboardPage() {
     .from(userUnits)
     .innerJoin(units, eq(userUnits.unitId, units.id))
     .innerJoin(buildings, eq(units.buildingId, buildings.id))
-    .where(eq(userUnits.userId, session.user.id))
-    .limit(1)
-    .then((res) => res[0]);
+    .where(eq(userUnits.userId, session.user.id));
 
-  // Fetch generic activity stats
-  const recentLogs = userUnit
+  // Group by Building
+  const buildingsMap = new Map();
+  allUserUnits.forEach((u) => {
+    if (!buildingsMap.has(u.buildingName)) {
+      buildingsMap.set(u.buildingName, u);
+    }
+  });
+  const uniqueBuildings = Array.from(buildingsMap.values());
+
+  // 3. Fetch generic activity stats (from the first available unit for now)
+  // 3. Fetch generic activity stats (from the first available unit for now)
+  const primaryUnitId = uniqueBuildings[0]?.unitId;
+  const recentLogs = primaryUnitId
     ? await db.query.accessLogs.findMany({
-        where: eq(accessLogs.unitId, userUnit.unitId),
+        where: eq(accessLogs.unitId, primaryUnitId),
         orderBy: [desc(accessLogs.createdAt)],
         limit: 5,
       })
     : [];
 
-  const activeRing = recentLogs.find((l) => l.status === "ringing");
+  // 4. Check for ANY active ringing state across ALL units
+  // We need to know which units are ringing to animate the correct building card
+  const unitIds = allUserUnits.map((u) => u.unitId);
+
+  // Use a raw query or findMany with 'inArray' if available, or just fetch recent logs for all active units
+  // For simplicity and to avoid importing 'inArray', let's just fetch active ringing logs
+  // We can optimize this later if the user has 100s of units.
+  const activeRings = await db.query.accessLogs.findMany({
+    where: (logs, { and, inArray, eq }) =>
+      and(inArray(logs.unitId, unitIds), eq(logs.status, "ringing")),
+    columns: { unitId: true },
+  });
+
+  const ringingUnitIds = new Set(activeRings.map((r) => r.unitId));
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in zoom-in duration-500">
@@ -59,148 +92,328 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {!userUnit ? (
+      {!uniqueBuildings.length ? (
         <div className="p-8 border border-dashed border-white/10 rounded-2xl text-center">
           <p className="text-zinc-500">No tienes propiedades asignadas.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[minmax(140px,auto)]">
-          {/* Main Widget: Live Status / Door Card Link */}
-          <Link
-            href={`/dashboard/properties/${userUnit.unitId}`}
-            className="col-span-1 md:col-span-2 row-span-2 relative group overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-xl transition-all duration-300 hover:border-cyan-500/30"
-          >
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Render a Card for EACH Building */}
+          {uniqueBuildings.map((bldg) => {
+            // Check if this building has any ringing unit
+            // Since 'uniqueBuildings' only has one entry per building (the first unit found),
+            // we technically need to check ALL units associated with this building.
+            // However, 'allUserUnits' has all of them.
 
-            {/* Bg Image Placeholder */}
-            <div className="absolute inset-0 z-0 bg-zinc-800">
-              <div className="w-full h-full opacity-30 mix-blend-overlay bg-[url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center group-hover:scale-105 transition-transform duration-700" />
-            </div>
+            const isBuildingRinging = allUserUnits
+              .filter((u) => u.buildingName === bldg.buildingName)
+              .some((u) => ringingUnitIds.has(u.unitId));
 
-            <div className="relative z-20 p-6 h-full flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2 bg-black/40 backdrop-blur rounded-full px-3 py-1.5 border border-white/5">
-                  <MapPin className="w-3 h-3 text-cyan-400" />
-                  <span className="text-xs font-medium text-white">
-                    {userUnit.buildingName} • {userUnit.unitLabel}
-                  </span>
+            return (
+              <Link
+                key={bldg.buildingSlug}
+                href={`/dashboard/properties/${bldg.unitId}`}
+                className={`col-span-1 relative group overflow-hidden rounded-3xl border bg-zinc-900/50 backdrop-blur-xl transition-all duration-300 h-64 ${
+                  isBuildingRinging
+                    ? "border-red-500/80 shadow-[0_0_50px_rgba(239,68,68,0.4)] animate-pulse"
+                    : "border-white/10 hover:border-cyan-500/30"
+                }`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10" />
+
+                {/* Bg Image Placeholder */}
+                <div className="absolute inset-0 z-0 bg-zinc-800">
+                  {(() => {
+                    let bgImage =
+                      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
+                    const name = bldg.buildingName || "";
+                    if (name.includes("Demo Center"))
+                      bgImage = "/edificio1.jpg";
+                    if (name.includes("Cabañas")) bgImage = "/edificio2.jpg";
+                    if (name.includes("Las Victorias"))
+                      bgImage = "/phPhoto.jpeg";
+
+                    return (
+                      <div
+                        className="w-full h-full opacity-30 mix-blend-overlay bg-cover bg-center group-hover:scale-105 transition-transform duration-700"
+                        style={{ backgroundImage: `url('${bgImage}')` }}
+                      />
+                    );
+                  })()}
                 </div>
-                {activeRing && (
-                  <span className="flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                  </span>
-                )}
-              </div>
 
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-1">
-                  {activeRing
-                    ? "¡Alguien está en la puerta!"
-                    : "Entrada Principal"}
-                </h3>
-                <p className="text-zinc-400 text-sm">
-                  {activeRing
-                    ? "Toca para ver la cámara"
-                    : "Sistema armado y seguro."}
-                </p>
-              </div>
-            </div>
-          </Link>
-
-          {/* Status Modules */}
-          <div className="col-span-1 rounded-3xl bg-zinc-900/40 border border-white/5 p-5 flex flex-col justify-between hover:bg-zinc-900/60 transition-colors">
-            <div className="flex justify-between items-start">
-              <Wifi className="w-6 h-6 text-emerald-500" />
-              <span className="text-xs text-zinc-500 font-mono">NET-5G</span>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">Excelente</div>
-              <div className="text-xs text-zinc-500">Señal de conexión</div>
-            </div>
-          </div>
-
-          <div className="col-span-1 rounded-3xl bg-zinc-900/40 border border-white/5 p-5 flex flex-col justify-between hover:bg-zinc-900/60 transition-colors">
-            <div className="flex justify-between items-start">
-              <Battery className="w-6 h-6 text-cyan-500" />
-              <span className="text-xs text-zinc-500 font-mono">PWR</span>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">100%</div>
-              <div className="text-xs text-zinc-500">Batería del sistema</div>
-            </div>
-          </div>
-
-          {/* Recent Activity Mini-List */}
-          <div className="col-span-1 md:col-span-1 rounded-3xl bg-zinc-900/40 border border-white/5 p-5 flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-4 h-4 text-purple-400" />
-              <span className="text-sm font-bold text-white">
-                Actividad Reciente
-              </span>
-            </div>
-            <div className="space-y-3 flex-1 overflow-hidden">
-              {recentLogs.length === 0 ? (
-                <p className="text-xs text-zinc-600">
-                  Sin actividad registrada.
-                </p>
-              ) : (
-                recentLogs.slice(0, 3).map((log) => (
-                  <div key={log.id} className="flex items-center gap-3 text-xs">
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        log.status === "opened"
-                          ? "bg-emerald-500"
-                          : "bg-amber-500"
-                      }`}
-                    />
-                    <span className="text-zinc-300 truncate flex-1">
-                      {log.status === "opened" ? "Puerta abierta" : "Timbre"}
-                    </span>
-                    <span
-                      className="text-zinc-500 font-mono text-[10px]"
-                      suppressHydrationWarning
-                    >
-                      {log.createdAt
-                        ? new Date(log.createdAt).toLocaleString("es-AR", {
-                            timeZone: "America/Argentina/Buenos_Aires",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          })
-                        : ""}
-                    </span>
+                <div className="relative z-20 p-6 h-full flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2 bg-black/40 backdrop-blur rounded-full px-3 py-1.5 border border-white/5">
+                      <MapPin className="w-3 h-3 text-cyan-400" />
+                      <span className="text-xs font-medium text-white max-w-[150px] truncate">
+                        {bldg.buildingName}
+                      </span>
+                    </div>
+                    {/* Fake Camera Button */}
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-cyan-900/40 hover:bg-cyan-900/60 border border-cyan-500/30 rounded-full text-cyan-400 text-[10px] font-bold uppercase tracking-wider transition-all">
+                      <span>Ver Cámara</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                        <circle cx="12" cy="13" r="3" />
+                      </svg>
+                    </button>
                   </div>
-                ))
-              )}
-            </div>
-            <Link
-              href="/dashboard/activity"
-              className="text-[10px] text-zinc-500 hover:text-white mt-3 block text-right transition-colors"
-            >
-              Ver todo →
-            </Link>
-          </div>
 
-          {/* Quick Actions / Panic */}
-          <div className="col-span-1 md:col-span-2 rounded-3xl bg-gradient-to-r from-zinc-900 to-zinc-800 border border-white/5 p-1 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-            <div className="relative z-10 h-full flex items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-black/50 rounded-full border border-white/10">
-                  <ShieldCheck className="w-6 h-6 text-white" />
+                  <div>
+                    {isBuildingRinging ? (
+                      <div className="animate-bounce mb-1">
+                        <span className="inline-block px-2 py-1 bg-red-600 text-white text-xs font-bold rounded uppercase tracking-wider">
+                          ¡Timbre Sonando!
+                        </span>
+                      </div>
+                    ) : null}
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      Entrada Principal
+                    </h3>
+                    <p className="text-zinc-400 text-sm">
+                      {isBuildingRinging
+                        ? "Alguien está en la puerta"
+                        : "Sistema armado y seguro."}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-white font-bold">Modo Seguro Activo</h4>
-                  <p className="text-zinc-400 text-xs">
-                    Todos los sensores operando normal.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+              </Link>
+            );
+          })}
         </div>
       )}
+
+      {/* Secondary Status Section */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* 
+        <div className="col-span-1 rounded-3xl bg-zinc-900/40 border border-white/5 p-5 flex flex-col justify-between hover:bg-zinc-900/60 transition-colors">
+          <div className="flex justify-between items-start">
+            <Wifi className="w-6 h-6 text-emerald-500" />
+            <span className="text-xs text-zinc-500 font-mono">NET</span>
+          </div>
+          <div>
+            <div className="text-xl font-bold text-white">5G</div>
+            <div className="text-xs text-zinc-500">Conectado</div>
+          </div>
+        </div>
+
+        <div className="col-span-1 rounded-3xl bg-zinc-900/40 border border-white/5 p-5 flex flex-col justify-between hover:bg-zinc-900/60 transition-colors">
+          <div className="flex justify-between items-start">
+            <Battery className="w-6 h-6 text-cyan-500" />
+            <span className="text-xs text-zinc-500 font-mono">PWR</span>
+          </div>
+          <div>
+            <div className="text-xl font-bold text-white">100%</div>
+            <div className="text-xs text-zinc-500">Batería</div>
+          </div>
+        </div> 
+        */}
+
+        {/* Recent Activity List (Expanded) */}
+        <div className="col-span-2 md:col-span-4 rounded-3xl bg-zinc-900/40 border border-white/5 p-6 flex flex-col min-h-[300px]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-purple-500/10 p-2 rounded-xl">
+              <Activity className="w-5 h-5 text-purple-400" />
+            </div>
+            <span className="text-lg font-bold text-white">
+              Actividad Reciente
+            </span>
+          </div>
+
+          <div className="space-y-4 flex-1">
+          <div className="space-y-4 flex-1">
+            {recentLogs.length === 0 ? (
+               // MOCK DATA RENDER (Fallback)
+                [
+                    {
+                        id: 'mock-1',
+                        status: 'ringing',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
+                        visitorPhotoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
+                        message: null
+                    },
+                    {
+                        id: 'mock-2',
+                        status: 'opened',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 25), // 25 mins ago
+                        visitorPhotoUrl: null,
+                        message: "Hola, soy del correo, dejo paquete."
+                    },
+                    {
+                        id: 'mock-3',
+                        status: 'missed',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+                        visitorPhotoUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
+                        message: "Vecino del 5to"
+                    },
+                    {
+                        id: 'mock-4',
+                        status: 'opened',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+                        visitorPhotoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
+                        message: null
+                    },
+                    {
+                        id: 'mock-5',
+                        status: 'ringing',
+                        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 25), // 1 day ago
+                        visitorPhotoUrl: null,
+                        message: null
+                    }
+                ].map((log) => (
+                  <div key={log.id} className="flex items-start gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5 opacity-80 hover:opacity-100">
+                    {/* Avatar / Photo */}
+                    <div className="flex-shrink-0">
+                        {log.visitorPhotoUrl ? (
+                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 relative">
+                                <img 
+                                    src={log.visitorPhotoUrl} 
+                                    alt="Visitor" 
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 text-zinc-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                            <p className="text-white font-medium text-sm">
+                                {log.status === 'opened' ? (
+                                    <span className="text-emerald-400">Acceso Permitido</span>
+                                ) : log.status === 'ringing' ? (
+                                    <span className="text-amber-400">Timbre</span>
+                                ) : (
+                                    <span className="text-red-400">No Atendido</span>
+                                )}
+                            </p>
+                            <span className="text-xs text-zinc-500 whitespace-nowrap ml-2">
+                            {log.createdAt
+                                ? new Date(log.createdAt).toLocaleString("es-AR", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    timeZone: "America/Argentina/Buenos_Aires",
+                                    })
+                                : "-"}
+                            </span>
+                        </div>
+                        
+                        {log.message ? (
+                            <div className="mt-1 flex items-start gap-2">
+                                <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-md line-clamp-2 italic">
+                                    "{log.message}"
+                                </span>
+                            </div>
+                        ) : (
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                                {log.visitorPhotoUrl ? "Visitante con foto" : "Sin identificación visual"}
+                            </p>
+                        )}
+                    </div>
+                  </div>
+                ))
+            ) : (
+              recentLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+                >
+                  {/* Avatar / Photo */}
+                  <div className="flex-shrink-0">
+                    {log.visitorPhotoUrl &&
+                    !log.visitorPhotoUrl.startsWith("MSG:") ? (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 relative">
+                        {/* Handle standard images vs data urls */}
+                        <img
+                          src={log.visitorPhotoUrl}
+                          alt="Visitor"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 text-zinc-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <p className="text-white font-medium text-sm">
+                        {log.status === "opened" ? (
+                          <span className="text-emerald-400">
+                            Acceso Permitido
+                          </span>
+                        ) : log.status === "ringing" ? (
+                          <span className="text-amber-400">Timbre</span>
+                        ) : (
+                          <span className="text-red-400">No Atendido</span>
+                        )}
+                      </p>
+                      <span className="text-xs text-zinc-500 whitespace-nowrap ml-2">
+                        {log.createdAt
+                          ? new Date(log.createdAt).toLocaleString("es-AR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              day: "2-digit",
+                              month: "2-digit",
+                              timeZone: "America/Argentina/Buenos_Aires",
+                            })
+                          : "-"}
+                      </span>
+                    </div>
+
+                    {log.message ? (
+                      <div className="mt-1 flex items-start gap-2">
+                        <span className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-md line-clamp-2 italic">
+                          "{log.message}"
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        {log.visitorPhotoUrl
+                          ? "Visitante con foto"
+                          : "Sin identificación visual"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

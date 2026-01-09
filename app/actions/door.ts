@@ -6,7 +6,7 @@ import { accessLogs, userUnits } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export async function openDoor(logId: string) {
+export async function openDoor(logId: string, target: "building" | "unit" | "default" = "default") {
     const session = await auth();
     if (!session?.user?.id) return { success: false, message: "Unauthorized" };
 

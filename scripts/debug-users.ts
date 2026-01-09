@@ -1,22 +1,25 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 import { db } from "@/db";
-import { residents, units } from "@/db/schema";
-import { eq } from "drizzle-orm";
 
 async function main() {
-  console.log("🔍 Checking Residents...");
+  console.log("🔍 Checking Users & Units...");
   
-  const allResidents = await db
-    .select({
-      name: residents.name,
-      phone: residents.phone,
-      unit: units.label
-    })
-    .from(residents)
-    .leftJoin(units, eq(residents.unitId, units.id));
+  const allUsers = await db.query.users.findMany({
+    with: {
+        units: {
+            with: {
+                unit: {
+                    with: {
+                        building: true
+                    }
+                }
+            }
+        }
+    }
+  });
 
-  console.log("Found Residents:", JSON.stringify(allResidents, null, 2));
+  console.log("Found Users:", JSON.stringify(allUsers, null, 2));
   process.exit(0);
 }
 
