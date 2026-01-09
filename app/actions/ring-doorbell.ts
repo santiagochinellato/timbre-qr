@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 // import { uploadVisitorSelfie } from '@/lib/storage/upload'; 
 import { sendPushNotification } from "@/actions/push-actions";
 
-const NOTIFICATION_LIMIT = 2;
+const NOTIFICATION_LIMIT = 3;
 const NOTIFICATION_WINDOW = 60 * 1000; // 1 minute
 // Simple in-memory rate limiter (Note: resets on server restart, use Redis for prod)
 const rateLimit = new Map<string, number[]>();
@@ -21,8 +21,8 @@ export async function ringDoorbell(prevState: any, formData: FormData) {
     // 1. Image Handling
     if (imageFile && imageFile.size > 0) {
         try {
-            const { saveLocalFile } = await import("@/lib/storage/upload-local");
-            photoUrl = await saveLocalFile(imageFile);
+            const { uploadFile } = await import("@/lib/storage");
+            photoUrl = await uploadFile(imageFile);
         } catch (error) {
             console.error("❌ Failed to save image:", error);
         }

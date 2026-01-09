@@ -40,20 +40,24 @@ export default async function PropertyDetailPage({
     return <div className="p-8 text-white">Propiedad no encontrada</div>;
 
   // Fetch sibling units (other units in the same building for this user)
-  const siblingUnits = await db
-    .select({
-      unitId: units.id,
-      label: units.label,
-    })
-    .from(userUnits)
-    .innerJoin(units, eq(userUnits.unitId, units.id))
-    .where(
-      and(
-        eq(userUnits.userId, session.user.id as string),
-        eq(units.buildingId, unit.buildingId),
-        ne(units.id, id)
-      )
-    );
+  let siblingUnits: { unitId: string; label: string }[] = [];
+
+  if (unit.buildingId) {
+    siblingUnits = await db
+      .select({
+        unitId: units.id,
+        label: units.label,
+      })
+      .from(userUnits)
+      .innerJoin(units, eq(userUnits.unitId, units.id))
+      .where(
+        and(
+          eq(userUnits.userId, session.user.id as string),
+          eq(units.buildingId, unit.buildingId),
+          ne(units.id, id)
+        )
+      );
+  }
 
   // Fetch logs
   const logs = await db.query.accessLogs.findMany({
@@ -109,20 +113,44 @@ export default async function PropertyDetailPage({
         <div className="p-6 flex flex-col items-center gap-6">
           {/* Ringing Visual */}
           {activeRing ? (
-            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10 shadow-inner">
-              {activeRing.visitorPhotoUrl ? (
-                <Image
-                  src={activeRing.visitorPhotoUrl}
-                  alt="Visitor"
-                  fill
-                  className="object-cover"
-                />
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10 shadow-inner flex flex-col">
+              {activeRing.visitorPhotoUrl &&
+              !activeRing.visitorPhotoUrl.startsWith("MSG:") ? (
+                <>
+                  <Image
+                    src={activeRing.visitorPhotoUrl}
+                    alt="Visitor"
+                    fill
+                    className="object-cover"
+                  />
+                  {/* Overlay Message if Photo Exists */}
+                  {activeRing.message && (
+                    <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-sm p-3 text-center">
+                      <p className="text-white text-sm font-medium italic">
+                        "{activeRing.message}"
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="h-full w-full flex items-center justify-center text-zinc-500">
-                  Cámara desconectada
+                <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center">
+                  {activeRing.message ? (
+                    <div className="space-y-2">
+                      <span className="text-zinc-500 text-xs uppercase tracking-widest font-bold">
+                        Mensaje del Visitante
+                      </span>
+                      <p className="text-white text-xl md:text-2xl font-serif italic leading-relaxed">
+                        "{activeRing.message}"
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-zinc-500 flex flex-col items-center gap-2">
+                      <span className="text-sm">Cámara desconectada</span>
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="absolute top-3 left-3 px-2 py-1 bg-alert/80 backdrop-blur text-white text-[10px] font-bold rounded uppercase tracking-wider animate-pulse">
+              <div className="absolute top-3 left-3 px-2 py-1 bg-alert/80 backdrop-blur text-white text-[10px] font-bold rounded uppercase tracking-wider animate-pulse z-10">
                 Live
               </div>
             </div>

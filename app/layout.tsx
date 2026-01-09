@@ -25,8 +25,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} no-scrollbar`}>
-      <body className="antialiased bg-surface text-text-primary tracking-tight font-medium min-h-dvh flex flex-col pt-safe pb-safe overflow-x-hidden font-sans">
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} no-scrollbar`}
+    >
+      <body
+        className="antialiased bg-surface text-text-primary tracking-tight font-medium min-h-dvh flex flex-col pt-safe pb-safe overflow-x-hidden font-sans"
+        suppressHydrationWarning
+      >
         <SmoothScroll>
           {children}
           <Toaster />

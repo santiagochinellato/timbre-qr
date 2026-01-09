@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { userUnits, units, buildings, accessLogs, users } from "@/db/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, gt } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Battery, Activity, ShieldCheck, MapPin, Wifi } from "lucide-react";
 import Link from "next/link";
@@ -71,8 +71,12 @@ export default async function DashboardPage() {
   // For simplicity and to avoid importing 'inArray', let's just fetch active ringing logs
   // We can optimize this later if the user has 100s of units.
   const activeRings = await db.query.accessLogs.findMany({
-    where: (logs, { and, inArray, eq }) =>
-      and(inArray(logs.unitId, unitIds), eq(logs.status, "ringing")),
+    where: (logs, { and, inArray, eq, gt }) =>
+      and(
+        inArray(logs.unitId, unitIds),
+        eq(logs.status, "ringing"),
+        gt(logs.createdAt, new Date(Date.now() - 2 * 60 * 1000))
+      ),
     columns: { unitId: true },
   });
 
