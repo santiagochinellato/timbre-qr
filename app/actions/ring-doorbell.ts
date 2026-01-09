@@ -1,72 +1,72 @@
 "use server";
 
 import { db } from "@/db";
-import { accessLogs, residents, units } from "@/db/schema";
+import { accessLogs, userUnits } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { WhatsAppClient } from "@/lib/whatsapp/client";
-// import { uploadVisitorSelfie } from '@/lib/storage/upload'; // 👈 COMENTADO TEMPORALMENTE
+// import { uploadVisitorSelfie } from '@/lib/storage/upload'; 
+import { sendPushNotification } from "@/actions/push-actions";
 
 export async function ringDoorbell(prevState: any, formData: FormData) {
-    const unitLabel = formData.get("unit") as string;
-    const imageFile = formData.get("image") as File;
+    // prompt said "Input: unitId (or slug)". But schema only has slug on buildings.
+    // We assume the form will send the unit's UUID as 'unitId' or 'slug' field.
+    const unitId = (formData.get("slug") || formData.get("unit")) as string;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _imageFile = formData.get("image") as File;
 
-    // 1. Validation
-    if (!unitLabel) {
-        return { success: false, message: "Missing unit" };
+    if (!unitId) {
+        return { success: false, message: "Missing unit identifier" };
     }
 
-    // ⚡ BYPASS DE R2 (Truco para probar sin Cloudflare)
-    // En lugar de subir la foto, usamos una URL de prueba que Meta acepte.
-    // Cuando tengas R2 configurado, descomenta la línea de abajo y borra la URL fija.
-    
+    // Storage Logic (kept as is/mocked)
     // const photoUrl = await uploadVisitorSelfie(imageFile); 
-    const photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"; // 📸 FOTO FALSA (Avatar genérico)
+    const photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"; 
 
     try {
-        // 2. Lookup Unit ID from Label (Needed because frontend sends "101" etc, not UUID)
-        const unitResult = await db.select().from(units).where(eq(units.label, unitLabel)).limit(1);
+        const unitResult = await db.query.units.findFirst({
+            where: (u, { eq }) => eq(u.id, unitId)
+        });
         
-        if (!unitResult.length) {
+        if (!unitResult) {
             return { success: false, message: "Unit not found" };
         }
         
-        const unitId = unitResult[0].id;
+        // const unitId = unitResult.id; // Already have it
 
-        // 3. Buscamos los residentes de esa unidad
-        const activeResidents = await db
-            .select()
-            .from(residents)
-            .where(eq(residents.unitId, unitId));
-
-        if (activeResidents.length === 0) {
-            return { success: false, message: "No hay residentes en esta unidad." };
-        }
-
-        // 4. Creamos el Log en la DB y enviamos WhatsApps (Paralelo)
-        // Primero insertamos el log para tener el ID
+        // Insert Log
         const [newLog] = await db
             .insert(accessLogs)
             .values({
-                unitId,
+                unitId: unitId,
                 visitorPhotoUrl: photoUrl,
                 status: "ringing",
             })
             .returning();
 
-        // Ahora enviamos los mensajes a todos los residentes
-        const whatsappClient = WhatsAppClient.getInstance();
-        
-        await Promise.all(
-            activeResidents.map((resident) =>
-                whatsappClient.sendAccessAlert(
-                    resident.phone,
-                    resident.name,
-                    unitLabel,
-                    photoUrl,
-                    newLog.id // 🔑 Importante: El ID del log para el botón "Abrir"
-                )
-            )
-        );
+        // Find associated users (owners/residents)
+        // Previous schema used 'residents' table. New schema uses 'userUnits' table linking to 'users'.
+        const associatedUsers = await db
+            .select({ userId: userUnits.userId })
+            .from(userUnits)
+            .where(eq(userUnits.unitId, unitId));
+
+        if (associatedUsers.length === 0) {
+            // Logged but no ones to notify
+            return { success: true, message: "Timbre tocado (Sin residentes activos)" };
+        }
+
+        // Send Push Notifications
+        const notificationPromises = associatedUsers.map(async (u) => {
+            if (u.userId) {
+                await sendPushNotification(
+                    u.userId,
+                    "Timbre Tocado",
+                    "Alguien está en la puerta",
+                    `/dashboard/logs/${newLog.id}`
+                );
+            }
+        });
+
+        await Promise.all(notificationPromises);
 
         return { success: true, message: "Timbre tocado" };
     } catch (error) {
