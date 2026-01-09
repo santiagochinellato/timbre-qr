@@ -4,6 +4,7 @@ import { accessLogs, units, buildings } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { openDoor } from "@/app/actions/door";
+import Link from "next/link";
 import { Clock, Unlock } from "lucide-react";
 import Image from "next/image";
 import SlideSubmitWrapper from "./submit-wrapper";
@@ -47,11 +48,34 @@ export default async function PropertyDetailPage({
   return (
     <div className="max-w-md mx-auto space-y-6">
       {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-white tracking-tight">
-          {unit.buildingName}
-        </h1>
-        <p className="text-zinc-400 font-medium">Unidad {unit.label}</p>
+      <div className="flex items-center gap-4 mb-6">
+        <Link
+          href="/dashboard"
+          className="p-2 rounded-full hover:bg-white/10 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-zinc-400"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+        </Link>
+        <div className="text-left">
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            {unit.buildingName}
+          </h1>
+          <p className="text-zinc-400 text-sm font-medium">
+            Unidad {unit.label}
+          </p>
+        </div>
       </div>
 
       {/* Dynamic Door Card */}
@@ -99,13 +123,11 @@ export default async function PropertyDetailPage({
               {activeRing ? "Están tocando timbre" : "Puerta Segura"}
             </h2>
             <p className="text-sm text-zinc-400 mt-1">
-              {activeRing
-                ? "Desliza abajo para abrir"
-                : "Sistema de acceso activo"}
+              {activeRing ? "Autoriza el acceso" : "Sistema de acceso activo"}
             </p>
           </div>
 
-          {/* Action Slider */}
+          {/* Actions */}
           {activeRing && (
             <div className="w-full">
               <form
@@ -114,7 +136,19 @@ export default async function PropertyDetailPage({
                   await openDoor(activeRing.id);
                 }}
               >
-                <SlideSubmitWrapper />
+                {/* Mobile: Slider */}
+                <div className="md:hidden">
+                  <SlideSubmitWrapper />
+                </div>
+
+                {/* Desktop: Button */}
+                <button
+                  type="submit"
+                  className="hidden md:flex w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                >
+                  <Unlock className="w-5 h-5" />
+                  Abrir Puerta
+                </button>
               </form>
             </div>
           )}

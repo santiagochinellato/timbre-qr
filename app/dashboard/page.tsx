@@ -162,9 +162,11 @@ export default async function DashboardPage() {
                       suppressHydrationWarning
                     >
                       {log.createdAt
-                        ? new Date(log.createdAt).toLocaleTimeString([], {
+                        ? new Date(log.createdAt).toLocaleString("es-AR", {
+                            timeZone: "America/Argentina/Buenos_Aires",
                             hour: "2-digit",
                             minute: "2-digit",
+                            hour12: true,
                           })
                         : ""}
                     </span>

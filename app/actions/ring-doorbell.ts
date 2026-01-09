@@ -9,17 +9,19 @@ import { sendPushNotification } from "@/actions/push-actions";
 export async function ringDoorbell(prevState: any, formData: FormData) {
     // prompt said "Input: unitId (or slug)". But schema only has slug on buildings.
     // We assume the form will send the unit's UUID as 'unitId' or 'slug' field.
+    const imageFile = formData.get("image") as File;
     const unitId = (formData.get("slug") || formData.get("unit")) as string;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _imageFile = formData.get("image") as File;
+    let photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"; // Fallback
 
-    if (!unitId) {
-        return { success: false, message: "Missing unit identifier" };
+    if (imageFile && imageFile.size > 0) {
+        try {
+            const { saveLocalFile } = await import("@/lib/storage/upload-local");
+            photoUrl = await saveLocalFile(imageFile);
+        } catch (error) {
+            console.error("❌ Failed to save image:", error);
+        }
     }
-
-    // Storage Logic (kept as is/mocked)
-    // const photoUrl = await uploadVisitorSelfie(imageFile); 
-    const photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80"; 
 
     try {
         const unitResult = await db.query.units.findFirst({
@@ -61,7 +63,7 @@ export async function ringDoorbell(prevState: any, formData: FormData) {
                     u.userId,
                     "Timbre Tocado",
                     "Alguien está en la puerta",
-                    `/dashboard/logs/${newLog.id}`
+                    `/dashboard`
                 );
             }
         });

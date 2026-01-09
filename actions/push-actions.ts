@@ -42,6 +42,7 @@ export async function sendPushNotification(userId: string, title: string, body: 
         });
 
         const payload = JSON.stringify({ title, body, url });
+        console.log(`📨 [Push] Sending to ${subscriptions.length} devices for User ${userId}`);
 
         await Promise.all(subscriptions.map(async (sub: any) => {
             try {

@@ -130,7 +130,11 @@ export default function PublicDoorbell({
               animate={{ opacity: 1, y: 0 }}
               className="w-full max-w-sm space-y-4"
             >
-              <div className="grid grid-cols-3 gap-3 max-h-[40vh] overflow-y-auto no-scrollbar p-1">
+              <div
+                className={`grid gap-3 max-h-[40vh] overflow-y-auto no-scrollbar p-1 ${
+                  units.length === 1 ? "grid-cols-1 w-full" : "grid-cols-3"
+                }`}
+              >
                 {units.map((unit) => (
                   <motion.button
                     key={unit.id}
@@ -138,21 +142,22 @@ export default function PublicDoorbell({
                     onClick={() => handleRing(unit.id)}
                     disabled={isPending}
                     className="
-                                            relative bg-zinc-900/60 backdrop-blur-xl border border-white/10 
-                                            py-4 rounded-xl flex flex-col items-center justify-center gap-2
-                                            hover:bg-zinc-800/80 hover:border-cyan-500/50 hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]
-                                            transition-all duration-300 group
-                                        "
+                        relative bg-zinc-900 border border-white/20 
+                        py-6 rounded-2xl flex flex-col items-center justify-center gap-2
+                        hover:bg-zinc-800 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]
+                        transition-all duration-300 group
+                        shadow-lg
+                    "
                   >
-                    <BellRing className="w-5 h-5 text-zinc-500 group-hover:text-cyan-400 mb-1" />
-                    <span className="font-mono text-lg font-bold text-zinc-200 group-hover:text-white">
+                    <BellRing className="w-8 h-8 text-white group-hover:text-cyan-400 mb-1 drop-shadow-md" />
+                    <span className="font-sans text-2xl font-bold text-white tracking-wide">
                       {unit.label}
                     </span>
                     {/* Breathing Glow Effect */}
                     <motion.div
-                      animate={{ opacity: [0.1, 0.3, 0.1] }}
+                      animate={{ opacity: [0.1, 0.4, 0.1] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="absolute inset-0 bg-cyan-500/5 rounded-xl pointer-events-none"
+                      className="absolute inset-0 bg-cyan-500/10 rounded-2xl pointer-events-none"
                     />
                   </motion.button>
                 ))}

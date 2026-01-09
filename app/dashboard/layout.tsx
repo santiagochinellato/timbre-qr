@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PushManager } from "@/components/push-manager";
+import { LiveStatusPoller } from "@/components/features/live-status-poller";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PushPermissionBanner } from "@/components/features/push-permission-banner";
 import Link from "next/link";
@@ -20,8 +21,8 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-bg-app text-text-main font-sans">
-      {/* Desktop Sidebar (Hidden on Mobile) */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border-subtle bg-bg-app p-6 sticky top-0 h-screen">
+      {/* Desktop Sidebar (Hidden on Mobile/Tablet) */}
+      <aside className="hidden lg:flex w-64 flex-col border-r border-border-subtle bg-bg-app p-6 sticky top-0 h-screen">
         <div className="flex items-center gap-2 mb-10">
           <Image
             src="/icons/GbellzWhite.webp"
@@ -68,14 +69,15 @@ export default async function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 relative flex flex-col min-h-0 w-full md:max-w-[calc(100vw-16rem)] overflow-y-auto">
         <PushManager />
+        <LiveStatusPoller />
         {/* Soft Permission Prompt */}
         <PushPermissionBanner />
 
         <div className="flex-1 p-4 md:p-8 pb-24 md:pb-8">{children}</div>
       </main>
 
-      {/* Mobile Bottom Nav */}
-      <div className="md:hidden">
+      {/* Mobile/Tablet Bottom Nav */}
+      <div className="lg:hidden">
         <BottomNav />
       </div>
     </div>
