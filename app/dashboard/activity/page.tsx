@@ -152,7 +152,7 @@ export default async function ActivityPage() {
 
                   {log.visitorPhotoUrl &&
                     !log.visitorPhotoUrl.startsWith("MSG:") && (
-                      <div className="relative w-full h-32 rounded-lg overflow-hidden border border-white/5 mt-1">
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-white/5 mt-1">
                         <Image
                           src={log.visitorPhotoUrl}
                           fill

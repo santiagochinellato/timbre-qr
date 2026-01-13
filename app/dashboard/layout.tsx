@@ -5,7 +5,7 @@ import { LiveStatusPoller } from "@/components/features/live-status-poller";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PushPermissionBanner } from "@/components/features/push-permission-banner";
 import Link from "next/link";
-import { Home, Key, DoorOpen } from "lucide-react";
+import { Home, Key, DoorOpen, Settings, LifeBuoy } from "lucide-react";
 import Image from "next/image";
 
 export default async function DashboardLayout({
@@ -45,6 +45,14 @@ export default async function DashboardLayout({
             icon={DoorOpen}
             label="Actividad"
           />
+          <NavItem href="/dashboard/support" icon={LifeBuoy} label="Soporte" />
+          {(session.user as any).role === "admin" && (
+            <NavItem
+              href="/dashboard/settings"
+              icon={Settings}
+              label="Configuración"
+            />
+          )}
         </nav>
 
         <div className="mt-auto border-t border-border-subtle pt-6">

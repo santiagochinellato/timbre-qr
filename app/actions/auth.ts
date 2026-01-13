@@ -8,7 +8,10 @@ export async function authenticate(
   formData: FormData,
 ) {
   try {
-    await signIn("credentials", formData);
+    // Map email to identifier as expected by auth logic
+    const email = formData.get("email");
+    const password = formData.get("password");
+    await signIn("credentials", { identifier: email, password });
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {

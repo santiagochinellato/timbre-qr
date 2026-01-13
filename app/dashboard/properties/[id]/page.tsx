@@ -3,11 +3,10 @@ import { db } from "@/db";
 import { accessLogs, units, buildings, userUnits } from "@/db/schema";
 import { eq, desc, and, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { openDoor } from "@/app/actions/door";
 import Link from "next/link";
-import { Clock, Unlock } from "lucide-react";
+import { Unlock } from "lucide-react";
 import Image from "next/image";
-import SlideSubmitWrapper from "./submit-wrapper";
+import OpenDoorControl from "@/components/features/open-door-control";
 
 export default async function PropertyDetailPage({
   params,
@@ -179,78 +178,37 @@ export default async function PropertyDetailPage({
             <div className="w-full space-y-3">
               {/* Option 1: Open Main Gate (If configured) */}
               {unit.buildingMqttTopic && (
-                <form
+                <OpenDoorControl
                   key="main-gate"
-                  action={async () => {
-                    "use server";
-                    await openDoor(activeRing.id, "building");
-                  }}
-                >
-                  <p className="text-xs text-zinc-500 text-center mb-1 uppercase tracking-wider">
-                    Entrada Principal
-                  </p>
-                  {/* Mobile: Slider */}
-                  <div className="md:hidden">
-                    <SlideSubmitWrapper />
-                  </div>
-                  {/* Desktop */}
-                  <button
-                    type="submit"
-                    className="hidden md:flex w-full bg-emerald-600/80 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl items-center justify-center gap-2 transition-all"
-                  >
-                    <Unlock className="w-5 h-5" />
-                    Abrir Reja
-                  </button>
-                </form>
+                  logId={activeRing.id}
+                  type="building"
+                  label="Entrada Principal"
+                />
               )}
 
               {/* Option 2: Open Unit Door (If configured) */}
               {unit.unitMqttTopic && (
-                <form
+                <OpenDoorControl
                   key="unit-door"
-                  action={async () => {
-                    "use server";
-                    await openDoor(activeRing.id, "unit");
-                  }}
-                >
-                  <p className="text-xs text-zinc-500 text-center mb-1 uppercase tracking-wider mt-2">
-                    {unit.buildingMqttTopic
+                  logId={activeRing.id}
+                  type="unit"
+                  label={
+                    unit.buildingMqttTopic
                       ? "Entrada Departamento"
-                      : "Entrada Única"}
-                  </p>
-                  <div className="md:hidden">
-                    <SlideSubmitWrapper />
-                  </div>
-                  <button
-                    type="submit"
-                    className="hidden md:flex w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl items-center justify-center gap-2 transition-all"
-                  >
-                    <Unlock className="w-5 h-5" />
-                    Abrir Puerta
-                  </button>
-                </form>
+                      : "Entrada Única"
+                  }
+                  className="mt-2"
+                />
               )}
 
               {/* Fallback if no specific configuration (Legacy behavior) */}
               {!unit.buildingMqttTopic && !unit.unitMqttTopic && (
-                <form
-                  action={async () => {
-                    "use server";
-                    await openDoor(activeRing.id, "default");
-                  }}
-                >
-                  <div className="md:hidden">
-                    <SlideSubmitWrapper />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="hidden md:flex w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                  >
-                    <Unlock className="w-5 h-5" />
-                    Abrir Puerta
-                  </button>
-                </form>
+                <OpenDoorControl
+                  key="default-door"
+                  logId={activeRing.id}
+                  type="default"
+                  label="Entrada Principal"
+                />
               )}
             </div>
           )}

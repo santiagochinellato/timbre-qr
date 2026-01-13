@@ -8,7 +8,9 @@ export const unitRoleEnum = pgEnum('unit_role', ['owner', 'resident', 'guest']);
 export const users = pgTable("user", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
-  email: text("email").notNull().unique(),
+  username: text("username").unique(),
+  email: text("email").notNull().unique(), // Reverted to not null
+  phone: text("phone"),
   passwordHash: text("password_hash").notNull(), // Stores BCRYPT hash
   image: text("image"),
   role: roleEnum('role').default('user'),
@@ -34,10 +36,11 @@ export const units = pgTable('units', {
 
 // 3. MANY-TO-MANY RELATION (Users <-> Units)
 export const userUnits = pgTable('user_units', {
-    userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
-    unitId: uuid('unit_id').references(() => units.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    unitId: uuid('unit_id').notNull().references(() => units.id, { onDelete: 'cascade' }),
     role: unitRoleEnum('role').default('owner'),
     active: boolean('active').default(true),
+    expiresAt: timestamp('expires_at'), // For guest access
 }, (t) => ({
     pk: primaryKey({ columns: [t.userId, t.unitId] }),
 }));
@@ -45,7 +48,7 @@ export const userUnits = pgTable('user_units', {
 // 4. PWA PUSH SUBSCRIPTIONS
 export const pushSubscriptions = pgTable('push_subscriptions', {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     endpoint: text('endpoint').notNull(),
     p256dh: text('keys_p256dh').notNull(),
     auth: text('keys_auth').notNull(),

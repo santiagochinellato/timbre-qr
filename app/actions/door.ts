@@ -36,7 +36,7 @@ export async function openDoor(logId: string, target: "building" | "unit" | "def
         // TO DO: Send MQTT Command or similar to actually open door
         // console.log(`Opening door for unit ${log.unitId}`);
 
-        revalidatePath(`/properties/${log.unitId}`);
+        revalidatePath(`/dashboard/properties/${log.unitId}`);
         return { success: true };
     } catch (error) {
         console.error("Error opening door:", error);

@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { buildings, residents, units, accessLogs } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { buildings, users, userUnits, units, accessLogs } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 
 // 1. Get Building by Slug (for QR Validation)
 export async function getBuildingBySlug(slug: string) {
@@ -16,12 +16,13 @@ export async function getResidentsByUnit(unitLabel: string, buildingId: string) 
 
     // Let's do a join query
     const result = await db.select({
-        name: residents.name,
-        phone: residents.phone,
+        name: users.name,
+        email: users.email,
         unitId: units.id
     })
-        .from(residents)
-        .innerJoin(units, eq(residents.unitId, units.id))
+        .from(userUnits)
+        .innerJoin(users, eq(userUnits.userId, users.id))
+        .innerJoin(units, eq(userUnits.unitId, units.id))
         .where(eq(units.label, unitLabel)) // Add buildingId check if we had it easily available or slug
     // For MVP we assume unit labels are unique per building? Or we should filter by building too.
     // The current request doesn't pass buildingId to this fn, let's update signature or fetch carefully.

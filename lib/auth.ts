@@ -13,15 +13,25 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     Credentials({
       async authorize(credentials) {
         const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
+          .object({ identifier: z.string().min(3), password: z.string().min(6) })
           .safeParse(credentials);
 
         if (parsedCredentials.success) {
-          const { email, password } = parsedCredentials.data;
-          // @ts-ignore
-          const user = await db.query.users.findFirst({
-              where: eq(users.email, email)
-          });
+          const { identifier, password } = parsedCredentials.data;
+          
+          let user = null;
+          
+          // Check if identifier is an email
+          if (identifier.includes("@")) {
+            user = await db.query.users.findFirst({
+              where: eq(users.email, identifier)
+            });
+          } else {
+             // Check via username
+             user = await db.query.users.findFirst({
+              where: eq(users.username, identifier)
+            });
+          }
 
           if (!user) return null;
           

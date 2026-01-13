@@ -100,7 +100,7 @@ export async function ringDoorbell(prevState: any, formData: FormData) {
 
         await Promise.all(notificationPromises);
 
-        return { success: true, message: "Llamando..." };
+        return { success: true, message: "Llamando...", logId: newLog.id };
     } catch (error) {
         console.error("Error ringing doorbell:", error);
         return { success: false, message: "Error interno del servidor" };

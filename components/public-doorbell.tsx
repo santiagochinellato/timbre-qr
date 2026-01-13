@@ -12,8 +12,9 @@ import { toast } from "sonner";
 import { CameraHandle } from "@/components/features/camera-mirror";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { BellRing, Camera, Loader2, Info } from "lucide-react";
+import { BellRing, Camera, Loader2, Info, Unlock } from "lucide-react";
 import Image from "next/image";
+import { checkCallStatus } from "@/app/actions/check-status";
 
 const CameraMirror = dynamic(
   () => import("@/components/features/camera-mirror"),
@@ -28,9 +29,16 @@ export default function PublicDoorbell({
   units: { id: string; label: string }[];
 }) {
   const [step, setStep] = useState<
-    "intro" | "camera" | "message" | "units" | "waiting" | "leave_message"
+    | "intro"
+    | "camera"
+    | "message"
+    | "units"
+    | "waiting"
+    | "leave_message"
+    | "success_open"
   >("intro");
   const [image, setImage] = useState<string | null>(null);
+  const [logId, setLogId] = useState<string | null>(null);
   const cameraRef = useRef<CameraHandle>(null);
   const [state, formAction, isPending] = useActionState(ringDoorbell, null);
   const [timeLeft, setTimeLeft] = useState(45); // 45s timeout
@@ -38,8 +46,8 @@ export default function PublicDoorbell({
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message);
-      // Instead of resetting immediately, go to 'waiting'
       setStep("waiting");
+      if (state.logId) setLogId(state.logId);
       setTimeLeft(45);
     } else if (state?.success === false) {
       toast.error(state.message);
@@ -58,7 +66,22 @@ export default function PublicDoorbell({
       setStep("leave_message");
     }
     return () => clearInterval(interval);
+    return () => clearInterval(interval);
   }, [step, timeLeft]);
+
+  // Polling for 'success' status
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    if (step === "waiting" && logId) {
+      pollInterval = setInterval(async () => {
+        const res = await checkCallStatus(logId);
+        if (res.success && res.status === "opened") {
+          setStep("success_open");
+        }
+      }, 2000);
+    }
+    return () => clearInterval(pollInterval);
+  }, [step, logId]);
 
   const handleCapture = (img: string) => {
     setImage(img);
@@ -423,6 +446,50 @@ export default function PublicDoorbell({
               >
                 Cancelar y Volver
               </button>
+            </motion.div>
+          )}
+
+          {/* STEP 4B: SUCCESS OPEN */}
+          {step === "success_open" && (
+            <motion.div
+              key="success_open"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-sm flex flex-col items-center text-center space-y-6"
+            >
+              <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center border-2 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+                <Unlock className="w-10 h-10 text-emerald-400" />
+              </div>
+
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  ¡Puede Pasar!
+                </h2>
+                <p className="text-zinc-300 text-base">
+                  La puerta ha sido abierta.
+                </p>
+              </div>
+
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl w-full">
+                <p className="text-emerald-400 text-sm font-medium">
+                  Bienvenido a {buildingName}
+                </p>
+              </div>
+
+              <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: "100%" }}
+                  animate={{ width: "0%" }}
+                  transition={{ duration: 5, ease: "linear" }}
+                  className="h-full bg-emerald-500"
+                  onAnimationComplete={() => {
+                    // Reset after 5 seconds
+                    setImage(null);
+                    setLogId(null);
+                    setStep("intro");
+                  }}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
