@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
  
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Bellz',
-    short_name: 'Bellz',
+    name: 'Llegue!',
+    short_name: 'Llegue!',
     description: 'Smart Doorbell PWA',
     start_url: '/dashboard',
     display: 'standalone',

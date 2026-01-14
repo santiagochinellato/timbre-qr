@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Timbre QR",
+  title: "Llegue!",
   description: "Visitor Entry System",
 };
 

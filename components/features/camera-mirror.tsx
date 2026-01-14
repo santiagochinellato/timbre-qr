@@ -6,11 +6,11 @@ import {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { motion } from "framer-motion";
+
 import { Button } from "@/components/ui/button";
 
 export interface CameraHandle {
-  capture: () => void;
+  capture: () => boolean;
 }
 
 interface CameraMirrorProps {
@@ -35,32 +35,56 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
             context.drawImage(videoRef.current, 0, 0);
             const data = canvasRef.current.toDataURL("image/webp", 0.7);
             onCapture(data);
+            return true;
           }
         }
+        return false;
       },
     }));
 
     useEffect(() => {
+      let mounted = true;
+      let mediaStream: MediaStream | null = null;
+
       async function setupCamera() {
         try {
-          const mediaStream = await navigator.mediaDevices.getUserMedia({
+          mediaStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "user" },
           });
-          setStream(mediaStream);
-          if (videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
+
+          if (mounted) {
+            setStream(mediaStream);
+            if (videoRef.current) {
+              videoRef.current.srcObject = mediaStream;
+              // Explicitly play to ensure it starts on some browsers
+              videoRef.current
+                .play()
+                .catch((e) => console.error("Play error:", e));
+            }
+          } else {
+            // If unmounted before stream acquired, stop it immediately
+            mediaStream.getTracks().forEach((track) => track.stop());
           }
         } catch (err) {
           console.error("Camera access denied", err);
-          setError("Allow camera access to verify identity.");
+          if (mounted) setError("Allow camera access to verify identity.");
         }
       }
+
       setupCamera();
 
       return () => {
-        stream?.getTracks().forEach((track) => track.stop());
+        mounted = false;
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+        }
+        // Also stop state stream if it exists
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
       };
-    }, []);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Removed stream dependency to avoid re-running, added internal handling
 
     const internalCapture = () => {
       if (videoRef.current && canvasRef.current) {
