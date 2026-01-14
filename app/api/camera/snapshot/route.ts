@@ -54,7 +54,7 @@ export async function GET(_req: NextRequest) {
   }
 
   // 3. FFMPEG Capture for RTSP
-  return new Promise((resolve) => {
+  return new Promise<NextResponse>((resolve) => {
     const tmpFile = join("/tmp", `snap-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`);
     
     // Use spawn to avoid shell quoting issues with "$" in passwords
