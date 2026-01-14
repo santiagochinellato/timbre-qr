@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { spawn } from "child_process";
 import { join } from "path";
 import fs from "fs";
+import ffmpegPath from "ffmpeg-static";
 
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +60,9 @@ export async function GET(_req: NextRequest) {
     
     // Use spawn to avoid shell quoting issues with "$" in passwords
     // ffmpeg -y -rtsp_transport tcp -i URL -vframes 1 tmpFile
+    // Use ffmpeg-static path or fallback to "ffmpeg" if something goes wrong (local dev)
+    const cmd = ffmpegPath || "ffmpeg";
+    
     const args = [
         "-y",
         "-rtsp_transport", "tcp",
@@ -67,11 +71,7 @@ export async function GET(_req: NextRequest) {
         tmpFile
     ];
     
-    // We do NOT print the full command to avoid leaking password in logs if possible, 
-    // but for debugging it's useful.
-    // console.log("Spawning FFMPEG..."); 
-
-    const child = spawn("ffmpeg", args);
+    const child = spawn(cmd, args);
     
     child.on('error', (err) => {
         console.error("Failed to start ffmpeg:", err);
