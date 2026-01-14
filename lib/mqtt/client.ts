@@ -1,15 +1,23 @@
 import mqtt from "mqtt";
 
-// Serverless-friendly MQTT: Connect -> Publish -> Disconnect
+/**
+ * Publishes a command to the MQTT broker with a strict timeout.
+ * Optimized for Door Opening usage in Serverless functions.
+ */
 export async function publishDoorCommand(
     buildingSlug: string,
     unitLabel: string,
     command: "OPEN",
     logId: string
-) {
+): Promise<boolean> {
     const brokerUrl = process.env.MQTT_BROKER_URL;
+    
+    // STRUCTURED LOGGING: START
+    const logPrefix = `[DOOR-OP] ${logId} | ${buildingSlug}-${unitLabel}`;
+    console.log(`${logPrefix} | INITIATING Command: ${command}`);
+
     if (!brokerUrl) {
-        console.warn("MQTT_BROKER_URL is missing. Door command skipped.");
+        console.error(`${logPrefix} | ERROR: MQTT_BROKER_URL is missing.`);
         return false;
     }
 
@@ -22,39 +30,49 @@ export async function publishDoorCommand(
         timestamp: Date.now(),
     });
 
-    console.log(`🔌 Connecting to MQTT Broker...`);
+    // We use a Promise.race to enforce a hard timeout on the entire operation
+    // (Connection + Publish). Next.js Serverless functions can't hang forever.
+    const TIMEOUT_MS = 2500;
 
-    return new Promise<boolean>((resolve, reject) => {
+    const mqttOperation = new Promise<boolean>((resolve, reject) => {
         const client = mqtt.connect(brokerUrl, {
-            connectTimeout: 5000, // 5s timeout
+            connectTimeout: 2000, 
+            keepalive: 5,
+            protocolId: 'MQTT',
+            protocolVersion: 4,
+            clean: true,
+            reconnectPeriod: 0, // Disable auto-reconnect for this one-shot command
+        });
+
+        // Fail fast on error
+        client.on("error", (err) => {
+            console.error(`${logPrefix} | MQTT Error:`, err.message);
+            client.end();
+            resolve(false); // Resolve false so we don't crash, just report failure
         });
 
         client.on("connect", () => {
-            console.log(`🔌 Connected! Publishing to ${topic}...`);
-
+            console.log(`${logPrefix} | Connected. Publishing...`);
+            
             client.publish(topic, payload, { qos: 1 }, (err) => {
+                client.end(); // Always disconnect immediately after publish logic
                 if (err) {
-                    console.error("MQTT Publish Error:", err);
-                    client.end();
+                    console.error(`${logPrefix} | Publish Failed:`, err.message);
                     resolve(false);
                 } else {
-                    console.log("🚀 Command Sent!");
-                    client.end();
+                    console.log(`${logPrefix} | SUCCESS: Command Sent.`);
                     resolve(true);
                 }
             });
         });
-
-        client.on("error", (err) => {
-            console.error("MQTT Connection Error:", err);
-            client.end();
-            resolve(false); // Resolve false instead of reject to avoid crashing serverless fn
-        });
-
-        // Safety timeout
-        setTimeout(() => {
-            if (client.connected) client.end();
-            resolve(false);
-        }, 6000);
     });
+
+    const timeoutOperation = new Promise<boolean>((resolve) => {
+        setTimeout(() => {
+            console.error(`${logPrefix} | TIMEOUT: Operation took longer than ${TIMEOUT_MS}ms`);
+            resolve(false);
+        }, TIMEOUT_MS);
+    });
+
+    return Promise.race([mqttOperation, timeoutOperation]);
 }
