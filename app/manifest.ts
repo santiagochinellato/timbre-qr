@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
  
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Llegue!',
+    name: ' ', // Empty space to hide text on splash screen without invalidating manifest
     short_name: 'Llegue!',
     description: 'Smart Doorbell PWA',
     start_url: '/dashboard',

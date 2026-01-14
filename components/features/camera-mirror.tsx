@@ -16,16 +16,15 @@ export interface CameraHandle {
 interface CameraMirrorProps {
   onCapture: (image: string) => void;
   fullscreen?: boolean;
+  defaultFacingMode?: "user" | "environment";
 }
 
 const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
-  ({ onCapture, fullscreen }, ref) => {
+  ({ onCapture, fullscreen, defaultFacingMode = "user" }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    // const [stream, setStream] = useState<MediaStream | null>(null); // logic moved to local var in effect + ref for cleanup
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    // const [hasPermission, setHasPermission] = useState(false);
 
     // Expose capture method
     useImperativeHandle(ref, () => ({
@@ -35,15 +34,6 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
           if (context) {
             canvasRef.current.width = videoRef.current.videoWidth;
             canvasRef.current.height = videoRef.current.videoHeight;
-
-            // Handle mirroring if using front camera (user facing)
-            // But we don't know for sure which one we got. Default usually mirrors "user", not "environment".
-            // Since we try "environment" first (rear), we might NOT want to mirror.
-            // But the CSS applies transform scale-x-[-1] effectively mirroring it.
-            // If it's rear camera, mirroring is confusing. If front, it's expected.
-            // For now, let's keep capture simple: direct draw.
-            // If CSS mirrors, user sees mirrored. Capture will be unmirrored unless we draw flipped.
-
             context.drawImage(videoRef.current, 0, 0);
             const data = canvasRef.current.toDataURL("image/webp", 0.7);
             onCapture(data);
@@ -63,32 +53,31 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
         setError(null);
 
         try {
-          // Estrategia de Fallback: Intentar Environment -> User -> Cualquiera
           let stream: MediaStream;
 
-          try {
-            // Intento 1: Cámara trasera (Ideal para QR/Timbre)
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: "environment" },
-              audio: false, // Importante: audio false evita feedback loop
+          const getStream = async (mode: "user" | "environment") => {
+            return await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: mode },
+              audio: false,
             });
+          };
+
+          try {
+            // Intento 1: Modo Preferido
+            stream = await getStream(defaultFacingMode);
           } catch (err) {
             console.warn(
-              "Environment camera not found, trying user camera...",
+              `Preferred mode ${defaultFacingMode} failed, trying alternate...`,
               err
             );
             try {
-              // Intento 2: Cámara frontal (Laptop/Fallback)
-              stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user" },
-                audio: false,
-              });
+              // Intento 2: Modo Alternativo
+              const altMode =
+                defaultFacingMode === "user" ? "environment" : "user";
+              stream = await getStream(altMode);
             } catch (err2) {
-              console.warn(
-                "User camera not found, trying any video device...",
-                err2
-              );
-              // Intento 3: Lo que sea que haya
+              console.warn("Alternate mode failed, trying any video...", err2);
+              // Intento 3: Cualquiera
               stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
                 audio: false,
@@ -102,8 +91,6 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
           }
 
           currentStream = stream;
-          // setStream(stream); // Not strictly needed for render if we use ref directly, but useful if we want checking.
-          // Keeping it minimal to avoid flicker.
 
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -112,14 +99,12 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
               .play()
               .catch((e) => console.error("Play error", e));
           }
-
-          // setHasPermission(true);
-        } catch (err: any) {
-          // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (err) {
           console.error("Fatal camera error:", err);
           if (mounted) {
+            const errorName = (err as Error)?.name;
             setError(
-              err.name === "NotAllowedError"
+              errorName === "NotAllowedError"
                 ? "Permiso de cámara denegado. Por favor permite el acceso."
                 : "No se pudo acceder a la cámara. Verifica que no esté en uso."
             );
@@ -138,7 +123,7 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
           currentStream.getTracks().forEach((track) => track.stop());
         }
       };
-    }, []);
+    }, [defaultFacingMode]);
 
     if (error) {
       return (

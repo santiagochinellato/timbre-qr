@@ -124,6 +124,7 @@ export default function PublicDoorbell({
             ref={cameraRef}
             onCapture={handleCapture}
             fullscreen={true}
+            defaultFacingMode="user"
           />
         )}
         {image && (
