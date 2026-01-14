@@ -45,7 +45,7 @@ export async function GET(_req: NextRequest) {
 
           if (response.ok) {
               const buffer = await response.arrayBuffer();
-              return new NextResponse(buffer, {
+              return new NextResponse(new Uint8Array(buffer), {
                   headers: {
                       "Content-Type": "image/jpeg",
                       "Cache-Control": "public, max-age=1",
@@ -68,7 +68,7 @@ export async function GET(_req: NextRequest) {
 
   // 1. FAST PATH: Serve from Cache if fresh
   if (globalSnapshotCache && (now - globalSnapshotCache.timestamp < CACHE_TTL_MS)) {
-    return new NextResponse(globalSnapshotCache.buffer, {
+    return new NextResponse(new Uint8Array(globalSnapshotCache.buffer), {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "public, max-age=1, stale-while-revalidate=1",
@@ -81,7 +81,7 @@ export async function GET(_req: NextRequest) {
   if (globalSnapshotPromise) {
     try {
       const buffer = await globalSnapshotPromise;
-      return new NextResponse(buffer, {
+      return new NextResponse(new Uint8Array(buffer), {
          headers: {
             "Content-Type": "image/jpeg",
             "X-Cache-Status": "COALESCED-LOCAL",
@@ -99,7 +99,7 @@ export async function GET(_req: NextRequest) {
       const buffer = await globalSnapshotPromise;
       globalSnapshotCache = { buffer: buffer, timestamp: Date.now() };
 
-      return new NextResponse(buffer, {
+      return new NextResponse(new Uint8Array(buffer), {
         headers: {
             "Content-Type": "image/jpeg",
             "Cache-Control": "public, max-age=1",
