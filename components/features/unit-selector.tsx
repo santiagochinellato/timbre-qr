@@ -1,106 +1,58 @@
 "use client";
-import { useActionState, useEffect, startTransition, useState } from "react";
-import { ringDoorbell } from "@/app/actions/ring-doorbell";
-import { getUnits } from "@/app/actions/get-units";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { Lock } from "lucide-react";
+
+interface Unit {
+  id: string;
+  label: string;
+  building: { name: string } | null;
+}
 
 export default function UnitSelector({
+  units = [],
   image,
   onReset,
 }: {
-  image: string;
-  onReset: () => void;
+  units?: Unit[];
+  image?: string;
+  onReset?: () => void;
 }) {
-  const [units, setUnits] = useState<string[]>([]);
-  const [state, formAction, isPending] = useActionState(ringDoorbell, null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    // Fetch units on mount
-    getUnits().then(setUnits);
-  }, []);
+  const currentUnitId =
+    searchParams.get("unitId") || (units.length > 0 ? units[0].id : "");
 
-  useEffect(() => {
-    if (state?.success) {
-      toast.success(state.message);
-    } else if (state?.success === false) {
-      toast.error(state.message);
-    }
-  }, [state]);
-
-  const handleSubmit = async (formData: FormData) => {
-    // Intercept submission to convert Base64 image to Blob
-    if (image?.startsWith("data:")) {
-      try {
-        const res = await fetch(image);
-        const blob = await res.blob();
-        const file = new File([blob], "visitor.jpg", { type: "image/jpeg" });
-        formData.set("image", file); // Replace the string with the file
-      } catch (e) {
-        console.error("Failed to convert image", e);
-        toast.error("Failed to process image");
-        return;
-      }
-    }
-    startTransition(() => {
-      formAction(formData);
-    });
+  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("unitId", e.target.value);
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   return (
-    <form action={handleSubmit} className="space-y-6 w-full">
-      {/* We still keep this as fallback or simple reference, but formData.set overwrites it */}
-      <input type="hidden" name="image_base64_fallback" value={image} />
-
-      <div className="space-y-3">
-        <label className="text-sm font-medium text-text-secondary uppercase tracking-wider text-xs">
-          Select Apartment
-        </label>
-        <div className="grid grid-cols-3 gap-3">
+    <div className="mb-6 w-full max-w-md">
+      <label className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2 block">
+        Seleccionar Dispositivo (Unidad)
+      </label>
+      <div className="relative">
+        <select
+          value={currentUnitId}
+          onChange={handleSelect}
+          className="w-full bg-zinc-900 border border-zinc-700 text-white p-3 pr-10 rounded-lg appearance-none focus:ring-2 focus:ring-cyan-500 outline-none"
+        >
           {units.map((u) => (
-            <label key={u} className="cursor-pointer group relative">
-              <input
-                type="radio"
-                name="unit"
-                value={u}
-                className="peer sr-only"
-                required
-              />
-              <div
-                className="
-                 h-12 flex items-center justify-center rounded-xl border border-text-secondary/10 bg-surface 
-                 font-mono text-lg font-medium text-text-primary
-                 transition-all duration-200
-                 group-hover:border-text-secondary/30
-                 peer-checked:border-action peer-checked:bg-action peer-checked:text-surface peer-checked:shadow-md
-               "
-              >
-                {u}
-              </div>
-            </label>
+            <option key={u.id} value={u.id}>
+              {u.building?.name} - {u.label}
+            </option>
           ))}
-        </div>
+        </select>
+        <Lock className="absolute right-3 top-3.5 w-4 h-4 text-zinc-500 pointer-events-none" />
       </div>
-
-      <div className="flex gap-3 pt-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onReset}
-          disabled={isPending}
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          className="flex-[2] text-base"
-          size="lg"
-          disabled={isPending}
-        >
-          {isPending ? "Connecting..." : "Ring Bell"}
-        </Button>
-      </div>
-    </form>
+      <p className="text-[10px] text-zinc-500 mt-2 text-center">
+        Selecciona la unidad que deseas simular.
+      </p>
+    </div>
   );
 }

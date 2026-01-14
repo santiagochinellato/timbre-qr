@@ -1,18 +1,19 @@
-import { db } from "@/db";
-import { units, accessLogs } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
 async function main() {
+  const { db } = await import("@/db");
+  const { units, accessLogs } = await import("@/db/schema");
+
   console.log("🔍 Checking Units...");
   const allUnits = await db.query.units.findMany({
       with: { building: true }
   });
   
   allUnits.forEach(u => {
-      console.log(`- [${u.id}] ${u.building.name} - Unit ${u.label} (Slug: ${u.slug})`);
+      console.log(`- [${u.id}] ${u.building?.name || 'N/A'} - Unit ${u.label} (Slug: ${u.building?.slug || 'N/A'})`);
   });
 
   console.log("\n🔍 Checking Recent Logs (Last 5)...");
