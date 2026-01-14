@@ -23,7 +23,7 @@ export default async function SimulatorPage() {
 
   if (!unit) {
     return (
-      <div className="p-8 text-center text-zinc-500">
+      <div className="p-8 text-center text-text-muted">
         No units found to simulate.
       </div>
     );
@@ -32,13 +32,13 @@ export default async function SimulatorPage() {
   return (
     <div className="min-h-[85vh] flex flex-col justify-center items-center p-4">
       {/* Simulation Warning Banner */}
-      <div className="w-full max-w-md bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-start gap-3 mb-8">
-        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+      <div className="w-full max-w-md bg-status-warning/10 border border-status-warning/20 rounded-xl p-3 flex items-start gap-3 mb-8">
+        <AlertTriangle className="w-5 h-5 text-status-warning shrink-0 mt-0.5" />
         <div>
-          <h3 className="text-amber-500 font-bold text-sm">
+          <h3 className="text-status-warning font-bold text-sm">
             Entorno de Simulación
           </h3>
-          <p className="text-amber-500/80 text-xs">
+          <p className="text-status-warning/80 text-xs">
             Estás interactuando con un gemelo digital. Las acciones aquí generan
             eventos reales en la base de datos y notifican a los usuarios reales
             de{" "}
@@ -56,10 +56,10 @@ export default async function SimulatorPage() {
       />
 
       <div className="mt-8 text-center space-y-2">
-        <p className="text-zinc-500 text-xs font-mono">
+        <p className="text-text-muted text-xs font-mono">
           MQTT Topic: timbre-qr/{unit.building?.slug}/ring
         </p>
-        <p className="text-zinc-600 text-[10px] font-mono uppercase">
+        <p className="text-text-muted text-[10px] font-mono uppercase opacity-70">
           Hardware ID: SIMULATOR-{unit.id.slice(0, 8)}
         </p>
       </div>

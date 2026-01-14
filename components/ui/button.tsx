@@ -15,18 +15,31 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "default", asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant = "primary",
+      size = "default",
+      asChild = false,
+      ...props
+    },
+    ref
+  ) => {
     // Basic implementation without extra deps
     const Comp = "button";
     return (
       <Comp
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95",
+          "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-bg-app transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95",
           {
-            "bg-action text-surface hover:bg-action/90": variant === "primary",
-            "border border-action bg-surface hover:bg-surface-muted hover:text-action": variant === "outline",
-            "hover:bg-surface-muted hover:text-text-primary": variant === "ghost",
-            "bg-alert text-surface hover:bg-alert/90": variant === "destructive",
+            "bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20":
+              variant === "primary",
+            "border border-border-subtle bg-bg-card hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-text-main text-text-main":
+              variant === "outline",
+            "hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-text-main text-text-main":
+              variant === "ghost",
+            "bg-status-alert text-white hover:bg-status-alert/90 shadow-md shadow-red-500/20":
+              variant === "destructive",
             "h-10 px-4 py-2": size === "default",
             "h-9 rounded-md px-3": size === "sm",
             "h-11 rounded-md px-8": size === "lg",

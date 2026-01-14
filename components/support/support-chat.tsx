@@ -61,9 +61,9 @@ export function SupportChat() {
   };
 
   return (
-    <div className="flex flex-col h-[500px] lg:h-[600px] bg-zinc-900/50 border border-white/5 rounded-2xl overflow-hidden">
+    <div className="flex flex-col h-[500px] lg:h-[600px] bg-bg-card border border-border-subtle rounded-2xl overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="p-4 border-b border-white/5 bg-zinc-900/80 backdrop-blur flex items-center gap-3">
+      <div className="p-4 border-b border-border-subtle bg-bg-card/80 backdrop-blur flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400">
           <Bot className="w-5 h-5" />
         </div>
@@ -89,7 +89,7 @@ export function SupportChat() {
               className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                 msg.role === "user"
                   ? "bg-zinc-700 text-white"
-                  : "bg-cyan-500/10 text-cyan-400"
+                  : "bg-primary/10 text-primary"
               }`}
             >
               {msg.role === "user" ? (
@@ -102,7 +102,7 @@ export function SupportChat() {
               className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
                 msg.role === "user"
                   ? "bg-cyan-600 text-white rounded-tr-sm"
-                  : "bg-zinc-800 text-zinc-200 rounded-tl-sm border border-white/5"
+                  : "bg-zinc-200 dark:bg-zinc-800 text-text-main rounded-tl-sm border border-border-subtle"
               }`}
             >
               <p>{msg.text}</p>
@@ -115,7 +115,7 @@ export function SupportChat() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-white/5 bg-zinc-900/80 backdrop-blur">
+      <div className="p-4 border-t border-border-subtle bg-bg-card/80 backdrop-blur">
         <form onSubmit={handleSend} className="flex gap-2">
           <input
             type="file"
@@ -127,7 +127,7 @@ export function SupportChat() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-xl bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+            className="p-3 rounded-xl bg-bg-app border border-border-subtle text-text-muted hover:text-text-main hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           >
             <ImageIcon className="w-5 h-5" />
           </button>
@@ -137,13 +137,13 @@ export function SupportChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escribe tu mensaje..."
-            className="flex-1 bg-zinc-800/50 border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 placeholder:text-zinc-600"
+            className="flex-1 bg-bg-app border border-border-subtle rounded-xl px-4 text-text-main focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-text-muted transition-all"
           />
 
           <button
             type="submit"
             disabled={!input.trim()}
-            className="p-3 rounded-xl bg-cyan-600 text-white font-bold hover:bg-cyan-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary/20"
           >
             <Send className="w-5 h-5" />
           </button>

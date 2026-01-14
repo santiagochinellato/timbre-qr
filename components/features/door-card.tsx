@@ -56,7 +56,7 @@ export function DoorCard({
   }, [unitId, activeRing, router]);
 
   return (
-    <div className="relative bg-bg-card backdrop-blur-xl border border-border-subtle rounded-2xl overflow-hidden shadow-2xl transition-all duration-500">
+    <div className="relative bg-bg-card backdrop-blur-xl border border-border-subtle rounded-2xl overflow-hidden shadow-sm transition-all duration-500">
       {/* Status Indicator */}
       <div
         className={`h-1 w-full ${
@@ -67,7 +67,7 @@ export function DoorCard({
       <div className="p-6 flex flex-col items-center gap-6">
         {/* Ringing Visual */}
         {activeRing ? (
-          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10 shadow-inner flex flex-col">
+          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-100 dark:bg-black border border-border-subtle dark:border-white/10 shadow-inner flex flex-col">
             {activeRing.visitorPhotoUrl &&
             !activeRing.visitorPhotoUrl.startsWith("MSG:") ? (
               <>
@@ -79,8 +79,8 @@ export function DoorCard({
                 />
                 {/* Overlay Message if Photo Exists */}
                 {activeRing.message && (
-                  <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-sm p-3 text-center">
-                    <p className="text-white text-sm font-medium italic">
+                  <div className="absolute bottom-0 inset-x-0 bg-white/95 dark:bg-black/60 backdrop-blur-sm p-3 text-center border-t border-border-subtle dark:border-white/5">
+                    <p className="text-text-main dark:text-white text-sm font-medium italic">
                       "{activeRing.message}"
                     </p>
                   </div>
@@ -90,10 +90,10 @@ export function DoorCard({
               <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center">
                 {activeRing.message ? (
                   <div className="space-y-2">
-                    <span className="text-zinc-500 text-xs uppercase tracking-widest font-bold">
+                    <span className="text-text-muted text-xs uppercase tracking-widest font-bold">
                       Mensaje del Visitante
                     </span>
-                    <p className="text-white text-xl md:text-2xl font-serif italic leading-relaxed">
+                    <p className="text-text-main dark:text-white text-xl md:text-2xl font-serif italic leading-relaxed">
                       "{activeRing.message}"
                     </p>
                   </div>
@@ -109,8 +109,8 @@ export function DoorCard({
             </div>
           </div>
         ) : (
-          <div className="w-24 h-24 rounded-full bg-zinc-800/50 flex items-center justify-center border border-white/5">
-            <Unlock className="w-10 h-10 text-zinc-600" />
+          <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center border border-border-subtle shadow-inner">
+            <Unlock className="w-10 h-10 text-text-muted" />
           </div>
         )}
 
@@ -118,12 +118,12 @@ export function DoorCard({
         <div className="text-center">
           <h2
             className={`text-xl font-bold ${
-              activeRing ? "text-white" : "text-zinc-500"
+              activeRing ? "text-text-main" : "text-text-muted"
             }`}
           >
             {activeRing ? "Están tocando timbre" : "Puerta Segura"}
           </h2>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-text-muted mt-1">
             {activeRing ? "Autoriza el acceso" : "Sistema de acceso activo"}
           </p>
         </div>

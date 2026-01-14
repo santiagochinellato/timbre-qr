@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import AdminTools from "@/components/profile/admin-tools";
 import { Settings } from "lucide-react";
 
+import { ModeToggle } from "@/components/mode-toggle";
+
 export default async function SettingsPage() {
   console.log("Loading Settings Page...");
   const session = await auth();
@@ -35,16 +37,19 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-          <Settings className="w-6 h-6 text-cyan-500" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+            <Settings className="w-6 h-6 text-cyan-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">
+            Configuración
+          </h1>
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">
-          Configuración
-        </h1>
+        <ModeToggle />
       </div>
 
-      <p className="text-zinc-400">
+      <p className="text-text-muted">
         Panel de administración para gestionar edificios, unidades y accesos.
       </p>
 

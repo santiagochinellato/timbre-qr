@@ -88,8 +88,8 @@ export default function AdminTools({
           <div className="text-white">{icon}</div>
         </div>
         <div>
-          <h3 className="text-white font-bold">{title}</h3>
-          <p className="text-xs text-zinc-400">{subtitle}</p>
+          <h3 className="text-text-main font-bold">{title}</h3>
+          <p className="text-xs text-text-muted">{subtitle}</p>
         </div>
       </div>
       {mode === "list" && (
@@ -107,7 +107,7 @@ export default function AdminTools({
             setMode("list");
             setEditingItem(null);
           }}
-          className="bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-700 transition-colors flex items-center gap-2"
+          className="bg-zinc-200 dark:bg-zinc-800 text-text-main dark:text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver
@@ -119,7 +119,7 @@ export default function AdminTools({
   return (
     <div className="space-y-6 mt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
           <Key className="w-5 h-5 text-amber-500" />
           Panel de Administrador
         </h2>
@@ -129,15 +129,15 @@ export default function AdminTools({
       </div>
 
       {/* Modern Tabs */}
-      <div className="flex p-1 bg-zinc-900/50 backdrop-blur-md border border-white/5 rounded-xl overflow-x-auto">
+      <div className="flex p-1 bg-zinc-200 dark:bg-zinc-900/50 backdrop-blur-md border border-border-subtle rounded-xl overflow-x-auto">
         {(["building", "unit", "user", "guest"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
             className={`flex-1 py-2.5 px-4 text-sm font-bold rounded-lg transition-all duration-200 capitalize whitespace-nowrap ${
               activeTab === tab
-                ? "bg-white text-black shadow-lg shadow-white/10"
-                : "text-zinc-500 hover:text-white hover:bg-white/5"
+                ? "bg-bg-card text-text-main shadow-sm"
+                : "text-text-muted hover:text-text-main hover:bg-black/5 dark:hover:bg-white/5"
             }`}
           >
             {tab === "building" && "Edificios"}
@@ -149,7 +149,7 @@ export default function AdminTools({
       </div>
 
       {/* Content Card */}
-      <div className="bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-6 relative overflow-hidden min-h-[400px]">
+      <div className="bg-bg-card backdrop-blur-md border border-border-subtle rounded-2xl p-6 relative overflow-hidden min-h-[400px]">
         {/* Decorative Gradient */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
@@ -172,11 +172,11 @@ export default function AdminTools({
                 {buildings.map((b) => (
                   <div
                     key={b.id}
-                    className="bg-black/20 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:border-white/10 transition-colors"
+                    className="bg-bg-card p-4 rounded-xl border border-border-subtle flex items-center justify-between hover:border-gray-300 transition-colors shadow-sm"
                   >
                     <div>
-                      <h4 className="font-bold text-white">{b.name}</h4>
-                      <p className="text-xs text-zinc-500 font-mono">
+                      <h4 className="font-bold text-text-main">{b.name}</h4>
+                      <p className="text-xs text-text-muted font-mono">
                         {b.slug}
                       </p>
                     </div>
@@ -268,11 +268,11 @@ export default function AdminTools({
                   return (
                     <div key={building.id} className="space-y-2">
                       <div className="flex items-center gap-2 px-1">
-                        <Building className="w-4 h-4 text-zinc-500" />
-                        <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+                        <Building className="w-4 h-4 text-text-muted" />
+                        <h4 className="text-sm font-bold text-text-muted uppercase tracking-wider">
                           {building.name}
                         </h4>
-                        <span className="text-xs text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-zinc-600 bg-zinc-200 dark:bg-zinc-900 px-2 py-0.5 rounded-full">
                           {buildingUnits.length}
                         </span>
                       </div>
@@ -280,13 +280,13 @@ export default function AdminTools({
                         {buildingUnits.map((u) => (
                           <div
                             key={u.id}
-                            className="bg-black/20 p-3 rounded-lg border border-white/5 flex items-center justify-between hover:border-white/10 hover:bg-white/5 transition-all group min-h-[60px]"
+                            className="bg-bg-card p-3 rounded-lg border border-border-subtle flex items-center justify-between hover:border-gray-300 transition-all group min-h-[60px] shadow-sm"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="w-8 h-8 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-xs shrink-0 border border-emerald-500/20">
                                 {u.label.substring(0, 2)}
                               </div>
-                              <span className="font-medium text-zinc-300 text-sm truncate pr-2">
+                              <span className="font-medium text-text-main text-sm truncate pr-2">
                                 {u.label}
                               </span>
                             </div>
@@ -295,7 +295,7 @@ export default function AdminTools({
                                 setEditingItem(u);
                                 setMode("edit");
                               }}
-                              className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
+                              className="p-1.5 rounded-md text-zinc-500 hover:text-text-main hover:bg-zinc-200 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
@@ -310,9 +310,9 @@ export default function AdminTools({
                 {units.filter((u) => !u.buildingId).length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-wider px-1 flex items-center gap-2">
-                      <Key className="w-4 h-4 text-zinc-500" />
+                      <Key className="w-4 h-4 text-text-muted" />
                       Unidades Sin Asignar
-                      <span className="text-xs text-zinc-600 bg-zinc-900 px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-zinc-600 bg-zinc-200 dark:bg-zinc-900 px-2 py-0.5 rounded-full">
                         {units.filter((u) => !u.buildingId).length}
                       </span>
                     </h4>
@@ -322,7 +322,7 @@ export default function AdminTools({
                         .map((u) => (
                           <div
                             key={u.id}
-                            className="bg-black/20 p-3 rounded-lg border border-white/5 flex items-center justify-between hover:border-white/10 hover:bg-white/5 transition-all group min-h-[60px]"
+                            className="bg-bg-card p-3 rounded-lg border border-border-subtle flex items-center justify-between hover:border-gray-300 transition-all group min-h-[60px] shadow-sm"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="w-8 h-8 rounded-md bg-zinc-500/10 flex items-center justify-center text-zinc-500 font-bold text-xs shrink-0 border border-zinc-500/20">
@@ -337,7 +337,7 @@ export default function AdminTools({
                                 setEditingItem(u);
                                 setMode("edit");
                               }}
-                              className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
+                              className="p-1.5 rounded-md text-zinc-500 hover:text-text-main hover:bg-zinc-200 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
@@ -369,14 +369,21 @@ export default function AdminTools({
                   <select
                     name="buildingId"
                     defaultValue={editingItem?.buildingId || ""}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all appearance-none cursor-pointer"
+                    className="w-full bg-zinc-100 dark:bg-black/40 border border-border-subtle dark:border-white/10 rounded-xl px-4 py-3 text-text-main dark:text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all appearance-none cursor-pointer"
                     required
                   >
-                    <option value="" className="bg-zinc-900 text-zinc-500">
+                    <option
+                      value=""
+                      className="bg-white dark:bg-zinc-900 text-text-muted"
+                    >
                       Seleccionar...
                     </option>
                     {buildings.map((b) => (
-                      <option key={b.id} value={b.id} className="bg-zinc-900">
+                      <option
+                        key={b.id}
+                        value={b.id}
+                        className="bg-white dark:bg-zinc-900"
+                      >
                         {b.name}
                       </option>
                     ))}
@@ -429,17 +436,17 @@ export default function AdminTools({
                   .map((u) => (
                     <div
                       key={u.id}
-                      className="bg-black/20 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:border-white/10 transition-colors"
+                      className="bg-bg-card p-4 rounded-xl border border-border-subtle flex items-center justify-between hover:border-gray-300 transition-colors shadow-sm"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-400">
+                        <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-500 dark:text-zinc-400">
                           {u.username?.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <h4 className="font-bold text-white text-sm">
+                          <h4 className="font-bold text-text-main text-sm">
                             {u.username}
                           </h4>
-                          <p className="text-xs text-zinc-500 capitalize">
+                          <p className="text-xs text-text-muted capitalize">
                             {u.role}
                           </p>
                         </div>
@@ -483,8 +490,8 @@ export default function AdminTools({
                          */}
                 {mode === "create" && (
                   <p className="text-amber-500 text-sm">
-                    Para crear usuarios, use el registro o 'Invitados' por
-                    ahora.
+                    Para crear usuarios, use el registro o &apos;Invitados&apos;
+                    por ahora.
                   </p>
                 )}
 
@@ -553,7 +560,7 @@ export default function AdminTools({
                 {guests?.map((g) => (
                   <div
                     key={`${g.userId}-${g.unitId}`}
-                    className="bg-black/20 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:border-white/10 transition-colors"
+                    className="bg-bg-card p-4 rounded-xl border border-border-subtle flex items-center justify-between hover:border-gray-300 transition-colors shadow-sm"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -562,10 +569,10 @@ export default function AdminTools({
                         }`}
                       />
                       <div>
-                        <h4 className="font-bold text-white text-sm">
+                        <h4 className="font-bold text-text-main text-sm">
                           {g.user?.username || g.user?.name}
                         </h4>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-text-muted">
                           {g.unit?.building?.name} - {g.unit?.label}
                         </p>
                       </div>
@@ -705,7 +712,7 @@ function Input({
         type={type}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder:text-zinc-700"
+        className="w-full bg-bg-app border border-border-subtle rounded-xl px-4 py-3 text-text-main focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder:text-text-muted"
         required={required}
       />
     </div>

@@ -46,7 +46,9 @@ export const SlideToOpen = ({
   return (
     <div
       className={`relative w-full h-16 rounded-full flex items-center p-1 overflow-hidden transition-colors duration-300 ${
-        unlocked ? "bg-emerald-500/20" : "bg-zinc-900 border border-zinc-700"
+        unlocked
+          ? "bg-emerald-500/20"
+          : "bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700"
       }`}
     >
       {/* Dynamic Background */}
@@ -77,13 +79,13 @@ export const SlideToOpen = ({
         className={`relative z-10 w-14 h-14 rounded-full flex items-center justify-center shadow-lg cursor-grab active:cursor-grabbing border ${
           unlocked
             ? "bg-emerald-500 border-emerald-400"
-            : "bg-zinc-800 border-zinc-600 group hover:border-cyan-500/50"
+            : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-600 group hover:border-cyan-500/50"
         }`}
       >
         {unlocked ? (
           <Unlock className="w-6 h-6 text-white" />
         ) : (
-          <ChevronRight className="w-6 h-6 text-zinc-400" />
+          <ChevronRight className="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
         )}
       </motion.div>
     </div>

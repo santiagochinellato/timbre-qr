@@ -100,18 +100,18 @@ export function NotificationsSettings({
         >
           <ArrowLeft className="w-5 h-5 text-zinc-400" />
         </Link>
-        <h1 className="text-xl font-bold text-white">Notificaciones</h1>
+        <h1 className="text-xl font-bold text-text-main">Notificaciones</h1>
       </div>
 
-      <div className="bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-6">
+      <div className="bg-bg-card backdrop-blur-md border border-border-subtle rounded-2xl p-6 space-y-6">
         {/* PUSH TOGGLE */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-sm font-medium text-white flex items-center gap-2">
-              <Bell className="w-4 h-4 text-cyan-400" />
+            <span className="text-sm font-medium text-text-main flex items-center gap-2">
+              <Bell className="w-4 h-4 text-cyan-500" />
               Push Notifications
             </span>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-text-muted">
               Recibe alertas en tu dispositivo cuando toquen el timbre.
             </p>
           </div>
@@ -120,14 +120,14 @@ export function NotificationsSettings({
             className={`w-10 h-6 rounded-full border relative transition-all ${
               pushEnabled
                 ? "bg-cyan-500/20 border-cyan-500/50"
-                : "bg-zinc-800 border-white/10"
+                : "bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-white/10"
             }`}
           >
             <div
               className={`absolute top-1 w-4 h-4 rounded-full transition-all shadow-lg ${
                 pushEnabled
                   ? "right-1 bg-cyan-400 shadow-cyan-400/50"
-                  : "left-1 bg-zinc-600"
+                  : "left-1 bg-white dark:bg-zinc-600"
               }`}
             />
           </button>
@@ -136,11 +136,13 @@ export function NotificationsSettings({
         {/* EMAIL DIGEST TOGGLE */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-sm font-medium text-white flex items-center gap-2">
-              <Mail className="w-4 h-4 text-purple-400" />
+            <span className="text-sm font-medium text-text-main flex items-center gap-2">
+              <Mail className="w-4 h-4 text-purple-500" />
               Email Digest
             </span>
-            <p className="text-xs text-zinc-500">Resumen semanal de accesos.</p>
+            <p className="text-xs text-text-muted">
+              Resumen semanal de accesos.
+            </p>
           </div>
           <button
             onClick={handleEmailToggle}
@@ -148,14 +150,14 @@ export function NotificationsSettings({
             className={`w-10 h-6 rounded-full border relative transition-all ${
               emailDigest
                 ? "bg-purple-500/20 border-purple-500/50"
-                : "bg-zinc-800 border-white/10"
+                : "bg-zinc-200 dark:bg-zinc-800 border-zinc-300 dark:border-white/10"
             }`}
           >
             <div
               className={`absolute top-1 w-4 h-4 rounded-full transition-all shadow-lg ${
                 emailDigest
                   ? "right-1 bg-purple-400 shadow-purple-400/50"
-                  : "left-1 bg-zinc-600"
+                  : "left-1 bg-white dark:bg-zinc-600"
               }`}
             />
           </button>

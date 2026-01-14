@@ -34,18 +34,18 @@ export default function ProfileForm({ user }: { user: any }) {
   };
 
   return (
-    <div className="bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+    <div className="bg-bg-card backdrop-blur-md border border-border-subtle rounded-2xl p-6 relative overflow-hidden shadow-sm">
       {/* Decorative Blur */}
       <div className="absolute -top-20 -left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <h2 className="text-xl font-bold text-white mb-8 relative z-10">
+      <h2 className="text-xl font-bold text-text-main mb-8 relative z-10">
         Datos Personales
       </h2>
 
       <form action={handleSubmit} className="space-y-8 relative z-10">
         {/* Avatar Upload */}
         <div className="flex flex-col items-center gap-4">
-          <div className="group relative w-28 h-28 rounded-full border-4 border-zinc-800 bg-zinc-800 shadow-2xl overflow-hidden cursor-pointer transition-transform hover:scale-105">
+          <div className="group relative w-28 h-28 rounded-full border-4 border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800 shadow-2xl overflow-hidden cursor-pointer transition-transform hover:scale-105">
             {preview ? (
               <img
                 src={preview}
@@ -53,7 +53,7 @@ export default function ProfileForm({ user }: { user: any }) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-zinc-600">
+              <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-zinc-400 dark:text-zinc-600">
                 {user.name?.charAt(0) || "U"}
               </div>
             )}
@@ -70,8 +70,8 @@ export default function ProfileForm({ user }: { user: any }) {
             />
           </div>
           <div className="text-center">
-            <p className="text-sm font-bold text-white">Foto de Perfil</p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-sm font-bold text-text-main">Foto de Perfil</p>
+            <p className="text-xs text-text-muted">
               Haz click en la imagen para cambiarla
             </p>
           </div>
@@ -80,42 +80,42 @@ export default function ProfileForm({ user }: { user: any }) {
         {/* Inputs Grid */}
         <div className="grid gap-5">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">
+            <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">
               Nombre Completo
             </label>
             <input
               name="name"
               defaultValue={user.name}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder:text-zinc-700"
+              className="w-full bg-zinc-100 dark:bg-black/40 border border-border-subtle dark:border-white/10 rounded-xl px-4 py-3 text-text-main dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-text-muted"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">
+            <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">
               Correo Electrónico
             </label>
-            <div className="relative opacity-60">
+            <div className="relative opacity-80 dark:opacity-60">
               <input
                 name="email"
                 defaultValue={user.email}
                 disabled
-                className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-zinc-400 cursor-not-allowed"
+                className="w-full bg-zinc-100 dark:bg-black/40 border border-border-subtle dark:border-white/5 rounded-xl px-4 py-3 text-text-muted cursor-not-allowed"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-600 bg-white/5 px-2 py-0.5 rounded">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-text-muted bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded">
                 LOCKED
               </div>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">
+            <label className="text-xs font-bold text-text-muted uppercase tracking-wider ml-1">
               Teléfono
             </label>
             <input
               name="phone"
               defaultValue={user.phone}
               placeholder="+54 9 ..."
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all placeholder:text-zinc-700 font-mono"
+              className="w-full bg-zinc-100 dark:bg-black/40 border border-border-subtle dark:border-white/10 rounded-xl px-4 py-3 text-text-main dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-text-muted font-mono"
             />
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function ProfileForm({ user }: { user: any }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-200 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-lg shadow-white/5"
+          className="w-full bg-primary text-white font-bold py-3.5 rounded-xl hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />

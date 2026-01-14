@@ -88,10 +88,10 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider">
+          <h2 className="text-text-muted text-sm font-medium uppercase tracking-wider">
             Centro de Comando
           </h2>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-3xl font-bold text-text-main tracking-tight">
             Hola, {session.user.name?.split(" ")[0]}
           </h1>
         </div>
@@ -106,8 +106,8 @@ export default async function DashboardPage() {
       </div>
 
       {!uniqueBuildings.length ? (
-        <div className="p-8 border border-dashed border-white/10 rounded-2xl text-center">
-          <p className="text-zinc-500">No tienes propiedades asignadas.</p>
+        <div className="p-8 border border-dashed border-border-subtle rounded-2xl text-center">
+          <p className="text-text-muted">No tienes propiedades asignadas.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,16 +126,16 @@ export default async function DashboardPage() {
               <Link
                 key={bldg.buildingSlug}
                 href={`/dashboard/properties/${bldg.unitId}`}
-                className={`col-span-1 relative group overflow-hidden rounded-3xl border bg-zinc-900/50 backdrop-blur-xl transition-all duration-300 h-64 ${
+                className={`col-span-1 relative group overflow-hidden rounded-3xl border bg-bg-card backdrop-blur-xl transition-all duration-300 h-64 ${
                   isBuildingRinging
-                    ? "border-red-500/80 shadow-[0_0_50px_rgba(239,68,68,0.4)] animate-pulse"
-                    : "border-white/10 hover:border-cyan-500/30"
+                    ? "border-status-alert/80 shadow-[0_0_50px_rgba(239,68,68,0.4)] animate-pulse"
+                    : "border-border-subtle hover:border-primary/50 shadow-sm"
                 }`}
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10" />
 
                 {/* Bg Image Placeholder */}
-                <div className="absolute inset-0 z-0 bg-zinc-800">
+                <div className="absolute inset-0 z-0  dark:bg-zinc-400 bg-zinc-400">
                   {(() => {
                     let bgImage =
                       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
@@ -157,7 +157,7 @@ export default async function DashboardPage() {
 
                 <div className="relative z-20 p-6 h-full flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2 bg-black/40 backdrop-blur rounded-full px-3 py-1.5 border border-white/5">
+                    <div className="flex items-center gap-2 bg-black/60 backdrop-blur rounded-full px-3 py-1.5 border border-white/10">
                       <MapPin className="w-3 h-3 text-cyan-400" />
                       <span className="text-xs font-medium text-white max-w-[150px] truncate">
                         {bldg.buildingName}
@@ -175,10 +175,10 @@ export default async function DashboardPage() {
                         </span>
                       </div>
                     ) : null}
-                    <h3 className="text-xl font-bold text-white mb-1">
+                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">
                       Entrada Principal
                     </h3>
-                    <p className="text-zinc-400 text-sm">
+                    <p className="text-zinc-200 text-sm drop-shadow-md shadow-black">
                       {isBuildingRinging
                         ? "Alguien está en la puerta"
                         : "Sistema armado y seguro."}
@@ -218,12 +218,12 @@ export default async function DashboardPage() {
         */}
 
         {/* Recent Activity List (Expanded) */}
-        <div className="col-span-2 md:col-span-4 rounded-3xl bg-zinc-900/40 border border-white/5 p-6 flex flex-col min-h-[300px]">
+        <div className="col-span-2 md:col-span-4 rounded-3xl bg-bg-card border border-border-subtle p-6 flex flex-col min-h-[300px] shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-purple-500/10 p-2 rounded-xl">
-              <Activity className="w-5 h-5 text-purple-400" />
+              <Activity className="w-5 h-5 text-purple-500" />
             </div>
-            <span className="text-lg font-bold text-white">
+            <span className="text-lg font-bold text-text-main">
               Actividad Reciente
             </span>
           </div>
@@ -286,7 +286,7 @@ export default async function DashboardPage() {
 
               if (displayLogs.length === 0) {
                 return (
-                  <div className="text-center text-zinc-500 py-10">
+                  <div className="text-center text-text-muted py-10">
                     No hay actividad reciente.
                   </div>
                 );
@@ -295,13 +295,13 @@ export default async function DashboardPage() {
               return displayLogs.map((log: any) => (
                 <div
                   key={log.id}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-bg-app hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors border border-border-subtle"
                 >
                   {/* Avatar / Photo */}
                   <div className="flex-shrink-0">
                     {log.visitorPhotoUrl &&
                     !log.visitorPhotoUrl.startsWith("MSG:") ? (
-                      <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 relative">
+                      <div className="w-14 h-14 rounded-xl overflow-hidden border border-border-subtle relative">
                         <img
                           src={log.visitorPhotoUrl}
                           alt="Visitor"
@@ -309,7 +309,7 @@ export default async function DashboardPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-zinc-800 flex items-center justify-center border border-white/10 text-zinc-500">
+                      <div className="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center border border-border-subtle dark:border-white/10 text-zinc-400 dark:text-zinc-500">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -334,16 +334,16 @@ export default async function DashboardPage() {
                     <div className="flex justify-between items-center">
                       <p className="font-bold text-base">
                         {log.status === "opened" ? (
-                          <span className="text-emerald-400">
+                          <span className="text-status-success">
                             Acceso Permitido
                           </span>
                         ) : log.status === "ringing" ? (
-                          <span className="text-amber-400">Timbre</span>
+                          <span className="text-amber-500">Timbre</span>
                         ) : (
-                          <span className="text-red-400">No Atendido</span>
+                          <span className="text-status-alert">No Atendido</span>
                         )}
                       </p>
-                      <span className="text-xs text-zinc-500 whitespace-nowrap">
+                      <span className="text-xs text-text-muted whitespace-nowrap">
                         {log.createdAt
                           ? new Date(log.createdAt).toLocaleString("es-AR", {
                               hour: "2-digit",
@@ -358,24 +358,24 @@ export default async function DashboardPage() {
 
                     {/* Middle Row: Location Details */}
                     {log.unit && (
-                      <div className="flex items-center gap-2 text-xs text-zinc-400">
-                        <span className="font-medium text-zinc-300">
+                      <div className="flex items-center gap-2 text-xs text-text-muted">
+                        <span className="font-medium text-text-main">
                           {log.unit.building?.name || "Edificio"}
                         </span>
-                        <span className="w-1 h-1 rounded-full bg-zinc-600" />
+                        <span className="w-1 h-1 rounded-full bg-text-muted" />
                         <span>Unidad {log.unit.label}</span>
                       </div>
                     )}
 
                     {/* Bottom Row: Message or Authorizer */}
                     {log.message ? (
-                      <div className="mt-1 bg-zinc-800/50 border border-white/5 rounded-lg px-3 py-1.5 inline-block self-start">
-                        <p className="text-zinc-300 text-xs italic">
+                      <div className="mt-1 bg-white dark:bg-zinc-800/50 border border-primary/20 dark:border-border-subtle rounded-lg px-3 py-1.5 inline-block self-start shadow-sm">
+                        <p className="text-text-main dark:text-text-muted text-xs italic">
                           &quot;{log.message}&quot;
                         </p>
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-500 mt-0.5">
+                      <p className="text-xs text-text-muted mt-0.5">
                         {log.visitorPhotoUrl
                           ? "Visitante con foto capturada"
                           : "Sin registro visual"}

@@ -71,29 +71,29 @@ export function PushPermissionBanner() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
-          className="fixed bottom-20 left-4 right-4 z-40 bg-zinc-900/90 backdrop-blur-md border border-zinc-800 p-4 rounded-xl shadow-2xl flex items-start gap-4"
+          className="fixed bottom-20 left-4 right-4 z-40 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl shadow-2xl flex items-start gap-4"
         >
-          <div className="p-2 bg-zinc-800 rounded-full shrink-0">
-            <Bell className="w-5 h-5 text-cyan-400" />
+          <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-full shrink-0">
+            <Bell className="w-5 h-5 text-cyan-500 dark:text-cyan-400" />
           </div>
           <div className="flex-1">
-            <h4 className="text-white font-medium text-sm">
+            <h4 className="text-text-main font-medium text-sm">
               Activar Notificaciones
             </h4>
-            <p className="text-zinc-400 text-xs mt-1 leading-relaxed">
+            <p className="text-text-muted text-xs mt-1 leading-relaxed">
               Para saber cuándo tocan tu timbre, Gbellz necesita enviarte
               alertas.
             </p>
             <div className="flex gap-3 mt-3">
               <button
                 onClick={handleAllow}
-                className="bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold px-4 py-2 rounded-full transition-colors"
+                className="bg-cyan-500 hover:bg-cyan-400 text-white dark:text-black text-xs font-bold px-4 py-2 rounded-full transition-colors"
               >
                 Permitir
               </button>
               <button
                 onClick={handleDismiss}
-                className="text-zinc-500 hover:text-white text-xs font-medium px-2 py-2"
+                className="text-text-muted hover:text-text-main text-xs font-medium px-2 py-2"
               >
                 Ahora no
               </button>
@@ -101,7 +101,7 @@ export function PushPermissionBanner() {
           </div>
           <button
             onClick={handleDismiss}
-            className="text-zinc-500 hover:text-white"
+            className="text-text-muted hover:text-text-main"
           >
             <X className="w-4 h-4" />
           </button>

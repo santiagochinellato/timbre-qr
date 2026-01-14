@@ -32,30 +32,32 @@ export function FAQAccordion() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-6">
-        <HelpCircle className="w-6 h-6 text-cyan-400" />
-        <h3 className="text-lg font-bold text-white">Preguntas Frecuentes</h3>
+        <HelpCircle className="w-6 h-6 text-primary" />
+        <h3 className="text-lg font-bold text-text-main">
+          Preguntas Frecuentes
+        </h3>
       </div>
 
       <div className="grid gap-3">
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="bg-zinc-900/50 border border-white/5 rounded-xl overflow-hidden transition-all duration-200"
+            className="bg-bg-card border border-border-subtle rounded-xl overflow-hidden transition-all duration-200 shadow-sm"
           >
             <button
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors"
             >
-              <span className="font-medium text-white">{faq.question}</span>
+              <span className="font-medium text-text-main">{faq.question}</span>
               {openIndex === index ? (
-                <ChevronUp className="w-5 h-5 text-zinc-500" />
+                <ChevronUp className="w-5 h-5 text-text-muted" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-zinc-500" />
+                <ChevronDown className="w-5 h-5 text-text-muted" />
               )}
             </button>
 
             {openIndex === index && (
-              <div className="px-4 pb-4 pt-0 text-zinc-400 text-sm leading-relaxed border-t border-white/5 mt-2 pt-3">
+              <div className="px-4 pb-4 pt-0 text-text-muted text-sm leading-relaxed border-t border-border-subtle mt-2 pt-3">
                 {faq.answer}
               </div>
             )}

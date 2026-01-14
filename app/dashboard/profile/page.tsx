@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   return (
     <div className="max-w-xl mx-auto space-y-8 pb-20">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl font-bold text-text-main tracking-tight">
           Mi Perfil
         </h1>
         <Image
@@ -33,7 +33,7 @@ export default async function ProfilePage() {
 
       {/* Helper for user role display */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="px-2 py-1 rounded-md bg-white/5 text-xs text-zinc-400 border border-white/5 uppercase tracking-wider font-mono">
+        <span className="px-2 py-1 rounded-md bg-zinc-200 dark:bg-white/5 text-xs text-text-muted border border-border-subtle dark:border-white/5 uppercase tracking-wider font-mono">
           {(session.user as any).role || "Resident"}
         </span>
       </div>

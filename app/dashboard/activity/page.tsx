@@ -22,9 +22,9 @@ export default async function ActivityPage() {
   // If no units, valid to show empty state
   if (unitIds.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto p-8 text-center border border-white/10 rounded-2xl bg-zinc-900/30">
-        <h2 className="text-xl font-bold text-white mb-2">Sin actividad</h2>
-        <p className="text-zinc-500">No tienes propiedades asignadas.</p>
+      <div className="max-w-2xl mx-auto p-8 text-center border border-border-subtle rounded-2xl bg-bg-card shadow-sm">
+        <h2 className="text-xl font-bold text-text-main mb-2">Sin actividad</h2>
+        <p className="text-text-muted">No tienes propiedades asignadas.</p>
       </div>
     );
   }
@@ -46,10 +46,10 @@ export default async function ActivityPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl font-bold text-text-main tracking-tight">
           Historial de Calidad
         </h1>
-        <span className="text-xs font-mono text-zinc-500">
+        <span className="text-xs font-mono text-text-muted">
           ÚLTIMOS 50 EVENTOS
         </span>
       </div>
@@ -63,13 +63,13 @@ export default async function ActivityPage() {
           logs.map((log) => (
             <div
               key={log.id}
-              className="group relative bg-zinc-900/40 backdrop-blur-md border border-white/5 rounded-xl p-4 transition-all hover:bg-zinc-900/60 hover:border-white/10"
+              className="group relative bg-bg-card backdrop-blur-md border border-border-subtle rounded-xl p-4 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-900/60 hover:border-primary/20 shadow-sm"
             >
               <div className="flex gap-4">
                 {/* Timestamp Column */}
-                <div className="flex flex-col items-center gap-1 min-w-[3rem] border-r border-white/5 pr-4 justify-start pt-1">
+                <div className="flex flex-col items-center gap-1 min-w-[3rem] border-r border-border-subtle pr-4 justify-start pt-1">
                   <span
-                    className="text-lg font-bold text-zinc-300 font-mono"
+                    className="text-lg font-bold text-text-main font-mono"
                     suppressHydrationWarning
                   >
                     {log.createdAt
@@ -81,7 +81,7 @@ export default async function ActivityPage() {
                       : "--:--"}
                   </span>
                   <span
-                    className="text-[10px] text-zinc-600 font-mono uppercase"
+                    className="text-[10px] text-text-muted font-mono uppercase"
                     suppressHydrationWarning
                   >
                     {log.createdAt
@@ -110,8 +110,8 @@ export default async function ActivityPage() {
 
                   {/* Location Details */}
                   {log.unit && (
-                    <div className="flex items-center gap-2 text-xs text-zinc-400 mb-2">
-                      <span className="font-medium text-zinc-300">
+                    <div className="flex items-center gap-2 text-xs text-text-muted mb-2">
+                      <span className="font-medium text-text-main">
                         {log.unit.building?.name || "Edificio"}
                       </span>
                       <span className="w-1 h-1 rounded-full bg-zinc-600" />
@@ -121,8 +121,8 @@ export default async function ActivityPage() {
 
                   {/* Message or Authorizer */}
                   {log.message ? (
-                    <div className="bg-zinc-800/50 border border-white/5 rounded-lg px-3 py-2 inline-block self-start mb-2">
-                      <p className="text-zinc-300 text-sm italic">
+                    <div className="bg-white dark:bg-zinc-800/50 border border-primary/20 dark:border-border-subtle rounded-lg px-3 py-2 inline-block self-start mb-2 shadow-sm">
+                      <p className="text-text-main dark:text-text-muted text-sm italic">
                         &quot;{log.message}&quot;
                       </p>
                     </div>
@@ -152,7 +152,7 @@ export default async function ActivityPage() {
 
                   {log.visitorPhotoUrl &&
                     !log.visitorPhotoUrl.startsWith("MSG:") && (
-                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-white/5 mt-1">
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border-subtle mt-1">
                         <Image
                           src={log.visitorPhotoUrl}
                           fill
@@ -176,11 +176,11 @@ function StatusIcon({ status }: { status: string | null }) {
     case "opened":
       return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
     case "ringing":
-      return <BellRing className="w-4 h-4 text-amber-500 animate-pulse" />;
+      return <BellRing className="w-4 h-4 text-status-warning animate-pulse" />;
     case "missed":
-      return <XCircle className="w-4 h-4 text-rose-500" />;
+      return <XCircle className="w-4 h-4 text-status-alert" />;
     default:
-      return <Activity className="w-4 h-4 text-zinc-500" />;
+      return <Activity className="w-4 h-4 text-text-muted" />;
   }
 }
 
@@ -202,10 +202,10 @@ function getStatusColor(status: string | null) {
     case "opened":
       return "text-emerald-400";
     case "ringing":
-      return "text-amber-400";
+      return "text-status-warning";
     case "missed":
-      return "text-rose-400";
+      return "text-status-alert";
     default:
-      return "text-zinc-400";
+      return "text-text-muted";
   }
 }

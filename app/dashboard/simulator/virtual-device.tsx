@@ -63,14 +63,14 @@ export function VirtualDevice({
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto aspect-[3/5] bg-zinc-900 rounded-[3rem] border-8 border-zinc-800 shadow-2xl overflow-hidden flex flex-col p-6">
+    <div className="relative w-full max-w-md mx-auto aspect-[3/5] bg-zinc-200 dark:bg-zinc-900 rounded-[3rem] border-8 border-white dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col p-6 transition-all duration-500">
       {/* Device Header/Status Bar */}
       <div className="flex justify-between items-center mb-10 px-2 opacity-70">
-        <div className="flex items-center gap-2 text-emerald-400">
+        <div className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400">
           <Wifi className="w-4 h-4" />
           <span className="text-xs font-mono font-bold">ONLINE</span>
         </div>
-        <div className="flex items-center gap-2 text-zinc-500">
+        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500">
           <Power className="w-4 h-4" />
           <span className="text-xs font-mono">BAT 100%</span>
         </div>
@@ -113,12 +113,12 @@ export function VirtualDevice({
           </AnimatePresence>
 
           {status === "idle" && (
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-mono text-zinc-600 uppercase tracking-widest whitespace-nowrap">
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-mono text-zinc-400 dark:text-zinc-600 uppercase tracking-widest whitespace-nowrap">
               Sistema Bloqueado
             </div>
           )}
           {status === "ringing" && (
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-mono text-amber-500 uppercase tracking-widest whitespace-nowrap animate-pulse">
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-mono text-status-warning uppercase tracking-widest whitespace-nowrap animate-pulse">
               Esperando Apertura...
             </div>
           )}
@@ -135,8 +135,8 @@ export function VirtualDevice({
                     transition-all duration-300 group
                     ${
                       status === "ringing"
-                        ? "bg-amber-500 border-amber-600 shadow-[0_0_40px_rgba(245,158,11,0.6)]"
-                        : "bg-zinc-800 border-zinc-700 hover:border-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]"
+                        ? "bg-status-warning border-status-warning shadow-[0_0_40px_rgba(245,158,11,0.6)]"
+                        : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-primary hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]"
                     }
                 `}
           >
@@ -151,22 +151,24 @@ export function VirtualDevice({
               className={`w-10 h-10 transition-colors ${
                 status === "ringing"
                   ? "text-white fill-white"
-                  : "text-zinc-400 group-hover:text-cyan-400"
+                  : "text-zinc-300 dark:text-zinc-400 group-hover:text-primary"
               }`}
             />
           </motion.button>
 
           <div className="text-center">
-            <h3 className="text-white font-bold text-lg tracking-tight">
+            <h3 className="text-text-main dark:text-white font-bold text-lg tracking-tight">
               TIMBRE
             </h3>
-            <p className="text-zinc-500 text-sm">{label}</p>
+            <p className="text-text-muted dark:text-zinc-500 text-sm">
+              {label}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Decorative Reflections */}
-      <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-tr from-transparent via-transparent to-white/5 pointer-events-none rounded-[2.5rem]" />
+      <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-tr from-transparent via-transparent to-black/5 dark:to-white/5 pointer-events-none rounded-[2.5rem]" />
     </div>
   );
 }

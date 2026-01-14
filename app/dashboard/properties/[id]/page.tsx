@@ -38,7 +38,7 @@ export default async function PropertyDetailPage({
     .then((res) => res[0]);
 
   if (!unit)
-    return <div className="p-8 text-white">Propiedad no encontrada</div>;
+    return <div className="p-8 text-text-main">Propiedad no encontrada</div>;
 
   // Fetch sibling units (other units in the same building for this user)
   let siblingUnits: { unitId: string; label: string }[] = [];
@@ -77,7 +77,7 @@ export default async function PropertyDetailPage({
       <div className="flex items-center gap-4 mb-6">
         <Link
           href="/dashboard"
-          className="p-2 rounded-full hover:bg-white/10 transition-colors"
+          className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -95,10 +95,10 @@ export default async function PropertyDetailPage({
           </svg>
         </Link>
         <div className="text-left">
-          <h1 className="text-xl font-bold text-white tracking-tight">
+          <h1 className="text-xl font-bold text-text-main tracking-tight">
             {unit.buildingName}
           </h1>
-          <p className="text-zinc-400 text-sm font-medium">
+          <p className="text-text-muted text-sm font-medium">
             Unidad {unit.label}
           </p>
         </div>
@@ -114,7 +114,7 @@ export default async function PropertyDetailPage({
 
       {/* Recent Visitor Gallery */}
       <div className="space-y-4">
-        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2">
+        <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">
           Últimas Aperturas
         </h3>
         <div className="grid grid-cols-5 gap-3">
@@ -127,7 +127,9 @@ export default async function PropertyDetailPage({
                 className={`w-14 h-14 rounded-2xl overflow-hidden border-2 transition-colors relative ${
                   log.status === "opened"
                     ? "border-emerald-500/30 group-hover:border-emerald-500"
-                    : "border-red-500/30 group-hover:border-red-500"
+                    : log.status === "ringing"
+                    ? "border-status-warning/30 group-hover:border-status-warning"
+                    : "border-status-alert/30 group-hover:border-status-alert"
                 }`}
               >
                 {log.visitorPhotoUrl ? (
@@ -139,13 +141,13 @@ export default async function PropertyDetailPage({
                     sizes="64px"
                   />
                 ) : (
-                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-zinc-600">
+                  <div className="w-full h-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-text-muted">
                     <span className="text-[10px]">Sin Foto</span>
                   </div>
                 )}
               </div>
               <span
-                className="text-[10px] text-zinc-500 font-mono"
+                className="text-[10px] text-text-muted font-mono"
                 suppressHydrationWarning
               >
                 {log.createdAt
@@ -159,7 +161,7 @@ export default async function PropertyDetailPage({
             </div>
           ))}
           {logs.length === 0 && (
-            <div className="col-span-5 text-center py-4 text-zinc-600 text-sm">
+            <div className="col-span-5 text-center py-4 text-text-muted text-sm">
               Sin actividad reciente
             </div>
           )}
@@ -168,8 +170,8 @@ export default async function PropertyDetailPage({
 
       {/* Sibling Units Grid */}
       {siblingUnits.length > 0 && (
-        <div className="space-y-4 pt-4 border-t border-white/5">
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2">
+        <div className="space-y-4 pt-4 border-t border-border-subtle">
+          <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">
             Otras Unidades en {unit.buildingName}
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -177,17 +179,17 @@ export default async function PropertyDetailPage({
               <Link
                 key={sibling.unitId}
                 href={`/dashboard/properties/${sibling.unitId}`}
-                className="group p-4 bg-zinc-900/50 border border-white/10 rounded-2xl hover:bg-zinc-800 hover:border-cyan-500/30 transition-all flex items-center justify-between"
+                className="group p-4 bg-bg-card border border-border-subtle rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-primary/30 transition-all flex items-center justify-between shadow-sm"
               >
                 <div>
-                  <div className="text-xs text-zinc-500 font-medium uppercase mb-1">
+                  <div className="text-xs text-text-muted font-medium uppercase mb-1">
                     Unidad
                   </div>
-                  <div className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">
+                  <div className="text-lg font-bold text-text-main group-hover:text-primary transition-colors">
                     {sibling.label}
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:text-cyan-400 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
