@@ -6,8 +6,8 @@ import {
   useImperativeHandle,
   forwardRef,
 } from "react";
-
-import { Button } from "@/components/ui/button";
+import { AlertCircle, Loader2 } from "lucide-react";
+// import { Button } from "@/components/ui/button"; // Removed as parent handles UI or internal button was unused in prompt logic mostly
 
 export interface CameraHandle {
   capture: () => boolean;
@@ -22,9 +22,12 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
   ({ onCapture, fullscreen }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [stream, setStream] = useState<MediaStream | null>(null);
+    // const [stream, setStream] = useState<MediaStream | null>(null); // logic moved to local var in effect + ref for cleanup
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    // const [hasPermission, setHasPermission] = useState(false);
 
+    // Expose capture method
     useImperativeHandle(ref, () => ({
       capture: () => {
         if (videoRef.current && canvasRef.current) {
@@ -32,6 +35,15 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
           if (context) {
             canvasRef.current.width = videoRef.current.videoWidth;
             canvasRef.current.height = videoRef.current.videoHeight;
+
+            // Handle mirroring if using front camera (user facing)
+            // But we don't know for sure which one we got. Default usually mirrors "user", not "environment".
+            // Since we try "environment" first (rear), we might NOT want to mirror.
+            // But the CSS applies transform scale-x-[-1] effectively mirroring it.
+            // If it's rear camera, mirroring is confusing. If front, it's expected.
+            // For now, let's keep capture simple: direct draw.
+            // If CSS mirrors, user sees mirrored. Capture will be unmirrored unless we draw flipped.
+
             context.drawImage(videoRef.current, 0, 0);
             const data = canvasRef.current.toDataURL("image/webp", 0.7);
             onCapture(data);
@@ -43,93 +55,102 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
     }));
 
     useEffect(() => {
+      let currentStream: MediaStream | null = null;
       let mounted = true;
-      let mediaStream: MediaStream | null = null;
 
-      async function setupCamera() {
+      const startCamera = async () => {
+        setIsLoading(true);
+        setError(null);
+
         try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user" },
-          });
+          // Estrategia de Fallback: Intentar Environment -> User -> Cualquiera
+          let stream: MediaStream;
 
-          if (mounted) {
-            setStream(mediaStream);
-            if (videoRef.current) {
-              videoRef.current.srcObject = mediaStream;
-              // Explicitly play to ensure it starts on some browsers
-              videoRef.current
-                .play()
-                .catch((e) => console.error("Play error:", e));
+          try {
+            // Intento 1: Cámara trasera (Ideal para QR/Timbre)
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: "environment" },
+              audio: false, // Importante: audio false evita feedback loop
+            });
+          } catch (err) {
+            console.warn(
+              "Environment camera not found, trying user camera...",
+              err
+            );
+            try {
+              // Intento 2: Cámara frontal (Laptop/Fallback)
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "user" },
+                audio: false,
+              });
+            } catch (err2) {
+              console.warn(
+                "User camera not found, trying any video device...",
+                err2
+              );
+              // Intento 3: Lo que sea que haya
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
             }
-          } else {
-            // If unmounted before stream acquired, stop it immediately
-            mediaStream.getTracks().forEach((track) => track.stop());
           }
-        } catch (err) {
-          console.error("Camera access denied", err);
-          if (mounted) setError("Allow camera access to verify identity.");
-        }
-      }
 
-      setupCamera();
+          if (!mounted) {
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+          }
 
-      return () => {
-        mounted = false;
-        if (mediaStream) {
-          mediaStream.getTracks().forEach((track) => track.stop());
-        }
-        // Also stop state stream if it exists
-        if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
+          currentStream = stream;
+          // setStream(stream); // Not strictly needed for render if we use ref directly, but useful if we want checking.
+          // Keeping it minimal to avoid flicker.
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            // Forzar play para navegadores perezosos
+            await videoRef.current
+              .play()
+              .catch((e) => console.error("Play error", e));
+          }
+
+          // setHasPermission(true);
+        } catch (err: any) {
+          // eslint-disable-line @typescript-eslint/no-explicit-any
+          console.error("Fatal camera error:", err);
+          if (mounted) {
+            setError(
+              err.name === "NotAllowedError"
+                ? "Permiso de cámara denegado. Por favor permite el acceso."
+                : "No se pudo acceder a la cámara. Verifica que no esté en uso."
+            );
+          }
+        } finally {
+          if (mounted) setIsLoading(false);
         }
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Removed stream dependency to avoid re-running, added internal handling
 
-    const internalCapture = () => {
-      if (videoRef.current && canvasRef.current) {
-        const context = canvasRef.current.getContext("2d");
-        if (context) {
-          canvasRef.current.width = videoRef.current.videoWidth;
-          canvasRef.current.height = videoRef.current.videoHeight;
-          context.drawImage(videoRef.current, 0, 0);
-          const data = canvasRef.current.toDataURL("image/webp", 0.7);
-          onCapture(data);
+      startCamera();
+
+      // Cleanup estricto
+      return () => {
+        mounted = false;
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
         }
-      }
-    };
+      };
+    }, []);
 
     if (error) {
       return (
-        <div className="flex h-full w-full items-center justify-center p-6 text-center bg-neutral-900">
-          <p className="text-alert font-medium">{error}</p>
-        </div>
-      );
-    }
-
-    // Loading Skeleton
-    if (!stream) {
-      return (
-        <div
-          className={`relative w-full h-full bg-neutral-800 animate-pulse overflow-hidden ${
-            !fullscreen && "rounded-2xl aspect-[3/4]"
-          }`}
-        >
-          <div className="absolute inset-0 flex items-center justify-center text-white/20">
-            <svg
-              className="w-16 h-16"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
-              />
-            </svg>
-          </div>
+        <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px] bg-zinc-900 rounded-2xl border-2 border-dashed border-zinc-700 p-6 text-center">
+          <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
+          <p className="text-zinc-400 font-medium">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-white text-black rounded-full text-sm font-bold hover:opacity-80 transition-opacity"
+          >
+            Reintentar
+          </button>
         </div>
       );
     }
@@ -137,39 +158,47 @@ const CameraMirror = forwardRef<CameraHandle, CameraMirrorProps>(
     return (
       <div
         className={`relative w-full h-full overflow-hidden bg-black ${
-          !fullscreen && "rounded-2xl shadow-xl"
+          !fullscreen &&
+          "rounded-2xl shadow-xl aspect-[9/16] md:aspect-video ring-1 ring-white/10"
         }`}
       >
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div
+            className={`absolute inset-0 z-20 flex flex-col items-center justify-center bg-zinc-900/80 backdrop-blur-sm ${
+              !fullscreen && "rounded-2xl"
+            }`}
+          >
+            <Loader2 className="w-8 h-8 text-white animate-spin mb-2" />
+            <p className="text-white/70 text-sm font-medium">
+              Iniciando cámara...
+            </p>
+          </div>
+        )}
+
+        {/* Video Element - Crucial Attributes */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover transform scale-x-[-1]"
+          className="absolute inset-0 w-full h-full object-cover z-10"
+          // Default styling - we can apply transform if needed but usually better handled by CSS or letting it be raw
+          // style={{ transform: 'scaleX(-1)' }}
         />
         <canvas ref={canvasRef} className="hidden" />
 
-        {!fullscreen && (
-          <div className="absolute bottom-6 left-0 right-0 flex justify-center z-10">
-            <Button
-              onClick={internalCapture}
-              size="lg"
-              className="rounded-full px-8 shadow-lg bg-white text-black hover:bg-gray-200"
-            >
-              Tomar Foto
-            </Button>
-          </div>
-        )}
-
-        {/* Internal "Timbre" Button if fullscreen and handled internally? 
-          No, parent handles it for "Mobile Physiology". 
-          But for now let's expose the captured method via ref or pass components in?
-          Parent page needs to render the button. 
-          So parent needs to call capture.
-      */}
-        {fullscreen && (
-          <div className="absolute inset-x-0 bottom-0 p-6 pb-10 z-20 pointer-events-none">
-            {/* This space is reserved for the parent UI overlay */}
+        {/* Overlay UI from prompt (optional) */}
+        {!isLoading && !error && (
+          <div
+            className={`absolute inset-0 z-30 pointer-events-none border-[1px] border-white/10 ${
+              !fullscreen && "rounded-2xl"
+            }`}
+          >
+            <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs text-white/90 font-medium">En vivo</span>
+            </div>
           </div>
         )}
       </div>
