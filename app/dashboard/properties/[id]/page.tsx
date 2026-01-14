@@ -4,9 +4,11 @@ import { accessLogs, units, buildings, userUnits } from "@/db/schema";
 import { eq, desc, and, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Unlock } from "lucide-react";
 import Image from "next/image";
-import OpenDoorControl from "@/components/features/open-door-control";
+import { DoorCard } from "@/components/features/door-card";
+import { checkUnitStatus } from "@/app/actions/check-status";
+
+export const dynamic = "force-dynamic";
 
 export default async function PropertyDetailPage({
   params,
@@ -58,14 +60,16 @@ export default async function PropertyDetailPage({
       );
   }
 
-  // Fetch logs
+  // Fetch logs for history
   const logs = await db.query.accessLogs.findMany({
     where: eq(accessLogs.unitId, id),
     orderBy: [desc(accessLogs.createdAt)],
     limit: 20,
   });
 
-  const activeRing = logs.find((l) => l.status === "ringing");
+  // Get reliable Active Ring status matching the poll logic
+  const statusCheck = await checkUnitStatus(id);
+  const activeRing = statusCheck.isRinging ? statusCheck.log : undefined;
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -101,119 +105,12 @@ export default async function PropertyDetailPage({
       </div>
 
       {/* Dynamic Door Card */}
-      <div className="relative bg-bg-card backdrop-blur-xl border border-border-subtle rounded-2xl overflow-hidden shadow-2xl transition-all duration-500">
-        {/* Status Indicator */}
-        <div
-          className={`h-1 w-full ${
-            activeRing ? "bg-alert animate-pulse" : "bg-success"
-          }`}
-        />
-
-        <div className="p-6 flex flex-col items-center gap-6">
-          {/* Ringing Visual */}
-          {activeRing ? (
-            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black border border-white/10 shadow-inner flex flex-col">
-              {activeRing.visitorPhotoUrl &&
-              !activeRing.visitorPhotoUrl.startsWith("MSG:") ? (
-                <>
-                  <Image
-                    src={activeRing.visitorPhotoUrl}
-                    alt="Visitor"
-                    fill
-                    className="object-cover"
-                  />
-                  {/* Overlay Message if Photo Exists */}
-                  {activeRing.message && (
-                    <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-sm p-3 text-center">
-                      <p className="text-white text-sm font-medium italic">
-                        "{activeRing.message}"
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center">
-                  {activeRing.message ? (
-                    <div className="space-y-2">
-                      <span className="text-zinc-500 text-xs uppercase tracking-widest font-bold">
-                        Mensaje del Visitante
-                      </span>
-                      <p className="text-white text-xl md:text-2xl font-serif italic leading-relaxed">
-                        "{activeRing.message}"
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-zinc-500 flex flex-col items-center gap-2">
-                      <span className="text-sm">Cámara desconectada</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className="absolute top-3 left-3 px-2 py-1 bg-alert/80 backdrop-blur text-white text-[10px] font-bold rounded uppercase tracking-wider animate-pulse z-10">
-                Live
-              </div>
-            </div>
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-zinc-800/50 flex items-center justify-center border border-white/5">
-              <Unlock className="w-10 h-10 text-zinc-600" />
-            </div>
-          )}
-
-          {/* Status Text */}
-          <div className="text-center">
-            <h2
-              className={`text-xl font-bold ${
-                activeRing ? "text-white" : "text-zinc-500"
-              }`}
-            >
-              {activeRing ? "Están tocando timbre" : "Puerta Segura"}
-            </h2>
-            <p className="text-sm text-zinc-400 mt-1">
-              {activeRing ? "Autoriza el acceso" : "Sistema de acceso activo"}
-            </p>
-          </div>
-
-          {/* Actions */}
-          {activeRing && (
-            <div className="w-full space-y-3">
-              {/* Option 1: Open Main Gate (If configured) */}
-              {unit.buildingMqttTopic && (
-                <OpenDoorControl
-                  key="main-gate"
-                  logId={activeRing.id}
-                  type="building"
-                  label="Entrada Principal"
-                />
-              )}
-
-              {/* Option 2: Open Unit Door (If configured) */}
-              {unit.unitMqttTopic && (
-                <OpenDoorControl
-                  key="unit-door"
-                  logId={activeRing.id}
-                  type="unit"
-                  label={
-                    unit.buildingMqttTopic
-                      ? "Entrada Departamento"
-                      : "Entrada Única"
-                  }
-                  className="mt-2"
-                />
-              )}
-
-              {/* Fallback if no specific configuration (Legacy behavior) */}
-              {!unit.buildingMqttTopic && !unit.unitMqttTopic && (
-                <OpenDoorControl
-                  key="default-door"
-                  logId={activeRing.id}
-                  type="default"
-                  label="Entrada Principal"
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <DoorCard
+        unitId={id}
+        initialLog={activeRing}
+        unitMqttTopic={unit.unitMqttTopic}
+        buildingMqttTopic={unit.buildingMqttTopic}
+      />
 
       {/* Recent Visitor Gallery */}
       <div className="space-y-4">
