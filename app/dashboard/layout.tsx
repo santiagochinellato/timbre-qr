@@ -75,7 +75,7 @@ export default async function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 relative flex flex-col min-h-0 w-full md:max-w-[calc(100vw-16rem)] overflow-y-auto">
+      <main className="flex-1 relative flex flex-col min-h-0 w-full lg:max-w-[calc(100vw-16rem)] overflow-y-auto">
         <PushManager />
         <LiveStatusPoller />
         {/* Soft Permission Prompt */}
@@ -86,7 +86,7 @@ export default async function DashboardLayout({
 
       {/* Mobile/Tablet Bottom Nav */}
       <div className="lg:hidden">
-        <BottomNav />
+        <BottomNav role={(session.user as any).role} />
       </div>
     </div>
   );
