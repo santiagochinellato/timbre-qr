@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { userUnits, units, buildings, accessLogs, users } from "@/db/schema";
-import { eq, desc, inArray, gt } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { Battery, Activity, ShieldCheck, MapPin, Wifi } from "lucide-react";
+import { Activity, MapPin } from "lucide-react";
 import Link from "next/link";
+import { CameraViewerButton } from "@/components/features/camera-viewer-button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -75,7 +76,7 @@ export default async function DashboardPage() {
       and(
         inArray(logs.unitId, unitIds),
         eq(logs.status, "ringing"),
-        gt(logs.createdAt, new Date(Date.now() - 2 * 60 * 1000))
+        gt(logs.createdAt, new Date(Date.now() - 2 * 60 * 1000)) // eslint-disable-line
       ),
     columns: { unitId: true },
   });
@@ -162,24 +163,8 @@ export default async function DashboardPage() {
                         {bldg.buildingName}
                       </span>
                     </div>
-                    {/* Fake Camera Button */}
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-cyan-900/40 hover:bg-cyan-900/60 border border-cyan-500/30 rounded-full text-cyan-400 text-[10px] font-bold uppercase tracking-wider transition-all">
-                      <span>Ver Cámara</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                        <circle cx="12" cy="13" r="3" />
-                      </svg>
-                    </button>
+                    {/* Camera Button Component */}
+                    <CameraViewerButton />
                   </div>
 
                   <div>
@@ -245,7 +230,7 @@ export default async function DashboardPage() {
 
           <div className="space-y-4 flex-1">
             {(() => {
-              const mockNow = Date.now();
+              const mockNow = new Date().getTime();
               const mockLogs = [
                 {
                   id: "mock-1",
