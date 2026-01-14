@@ -5,6 +5,7 @@ import { LiveStatusPoller } from "@/components/features/live-status-poller";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PushPermissionBanner } from "@/components/features/push-permission-banner";
 import Link from "next/link";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Home, Key, DoorOpen, Settings, LifeBuoy } from "lucide-react";
 import Image from "next/image";
 
@@ -55,10 +56,14 @@ export default async function DashboardLayout({
           )}
         </nav>
 
-        <div className="mt-auto border-t border-border-subtle pt-6">
+        <div className="mt-auto border-t border-border-subtle pt-6 flex flex-col gap-4">
+          <div className="flex justify-center w-full">
+            <ModeToggle />
+          </div>
+
           <Link
             href="/dashboard/profile"
-            className="flex items-center gap-3 mb-4 hover:bg-white/5 p-2 rounded-lg transition-colors group"
+            className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-lg transition-colors group"
           >
             <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-primary font-bold border border-zinc-200 dark:border-white/5 group-hover:border-primary/50 transition-colors">
               {session.user.name?.charAt(0) || "U"}

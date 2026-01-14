@@ -13,6 +13,7 @@ import {
   Settings,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export function BottomNav({ role }: { role?: string }) {
   const pathname = usePathname();
@@ -58,6 +59,10 @@ export function BottomNav({ role }: { role?: string }) {
                 <span className="text-sm font-medium">{link.label}</span>
               </Link>
             ))}
+            <div className="h-px bg-zinc-100 dark:bg-white/5 my-1" />
+            <div className="px-4 py-2 flex justify-center">
+              <ModeToggle />
+            </div>
           </div>
         </div>
       )}
