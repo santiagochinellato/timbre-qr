@@ -23,11 +23,11 @@ export default async function ProfilePage() {
           Mi Perfil
         </h1>
         <Image
-          src="/icons/GbellzWhite.webp"
+          src="/icons/isologoVertical.png"
           alt="Logo"
           width={40}
           height={40}
-          className="opacity-50 object-contain"
+          className="object-contain"
         />
       </div>
 

@@ -23,13 +23,13 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-bg-app text-text-main font-sans">
       {/* Desktop Sidebar (Hidden on Mobile/Tablet) */}
       <aside className="hidden lg:flex w-64 flex-col border-r border-border-subtle bg-bg-app p-6 sticky top-0 h-screen">
-        <div className="flex items-center gap-2 mb-10">
+        <div className="flex items-center gap-2 mb-10 pl-2">
           <Image
-            src="/icons/GbellzWhite.webp"
-            alt="Gbellz Logo"
-            width={120}
-            height={120}
-            className="w object-contain"
+            src="/icons/lleguelogo.png"
+            alt="Llegue Logo"
+            width={160}
+            height={60}
+            className="w-auto h-16 object-contain"
           />
         </div>
 

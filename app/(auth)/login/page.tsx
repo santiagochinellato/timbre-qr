@@ -16,13 +16,13 @@ export default function LoginPage() {
         action={dispatch}
         className="flex flex-col gap-5 rounded-2xl bg-zinc-900/50 backdrop-blur-md border border-white/10 p-8 shadow-[0_0_40px_rgba(0,0,0,0.3)] w-full max-w-sm"
       >
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center mb-6">
           <Image
-            src="/icons/GbellzWhite.webp"
-            alt="Gbellz Logo"
-            width={104}
-            height={104}
-            className="w-28 h-28 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+            src="/icons/isologoVertical.png"
+            alt="Llegue"
+            width={120}
+            height={120}
+            className="w-28 h-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
           />
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 text-white tracking-tight">

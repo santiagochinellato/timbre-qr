@@ -149,8 +149,8 @@ export default function PublicDoorbell({
         <motion.div layout className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <Image
-              src="/icons/GbellzWhite.webp"
-              alt="Gbellz"
+              src="/icons/isologoVertical.png"
+              alt="Llegue"
               width={140}
               height={140}
               className="w-36 h-36 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
