@@ -60,7 +60,7 @@ export default async function DashboardLayout({
             href="/dashboard/profile"
             className="flex items-center gap-3 mb-4 hover:bg-white/5 p-2 rounded-lg transition-colors group"
           >
-            <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-primary font-bold border border-white/5 group-hover:border-primary/50 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-primary font-bold border border-zinc-200 dark:border-white/5 group-hover:border-primary/50 transition-colors">
               {session.user.name?.charAt(0) || "U"}
             </div>
             <div>
@@ -104,7 +104,7 @@ function NavItem({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-muted hover:text-white hover:bg-zinc-900 transition-all duration-200"
+      className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-muted hover:text-text-main dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all duration-200"
     >
       <Icon className="w-5 h-5" />
       <span className="text-sm font-medium">{label}</span>

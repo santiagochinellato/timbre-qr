@@ -116,7 +116,7 @@ export default function PublicDoorbell({
   };
 
   return (
-    <div className="min-h-dvh bg-bg-app text-white flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-dvh bg-bg-app text-text-main dark:text-white flex flex-col relative overflow-hidden font-sans">
       {/* Background (Camera is only active in 'camera' step to save resources/permissions, but we want a cool bg always) */}
       <div className="absolute inset-0 z-0 bg-black">
         {step === "camera" && (
@@ -139,10 +139,10 @@ export default function PublicDoorbell({
 
         {/* Abstract Gradient for Intro */}
         {step === "intro" && (
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-800 via-black to-black opacity-80" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-200 via-zinc-100 to-zinc-50 dark:from-zinc-800 dark:via-black dark:to-black opacity-80" />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-black dark:via-black/90 dark:to-transparent pointer-events-none" />
       </div>
 
       {/* Content Layer */}
@@ -160,7 +160,7 @@ export default function PublicDoorbell({
           <h1 className="text-3xl font-bold tracking-tight mb-2 drop-shadow-lg">
             {buildingName}
           </h1>
-          <p className="text-zinc-400 font-medium">
+          <p className="text-text-muted dark:text-zinc-400 font-medium">
             {step === "intro" && "Sistema de Acceso Seguro"}
             {step === "camera" && "Identifícate para ingresar"}
             {step === "units" && "Selecciona a quién visitas"}
@@ -177,7 +177,7 @@ export default function PublicDoorbell({
               exit={{ opacity: 0, y: -20 }}
               className="w-full max-w-sm space-y-6"
             >
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 space-y-4">
+              <div className="bg-white/80 dark:bg-white/5 backdrop-blur-md border border-zinc-200 dark:border-white/10 rounded-2xl p-6 space-y-4 shadow-sm">
                 <div className="flex items-center gap-4">
                   <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold border border-cyan-500/30">
                     1
@@ -187,7 +187,7 @@ export default function PublicDoorbell({
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-500 flex items-center justify-center font-bold border border-white/5">
+                  <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-500 flex items-center justify-center font-bold border border-zinc-300 dark:border-white/5">
                     2
                   </div>
                   <p className="text-sm text-zinc-300">
@@ -195,7 +195,7 @@ export default function PublicDoorbell({
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-500 flex items-center justify-center font-bold border border-white/5">
+                  <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-500 flex items-center justify-center font-bold border border-zinc-300 dark:border-white/5">
                     3
                   </div>
                   <p className="text-sm text-zinc-300">
@@ -235,15 +235,15 @@ export default function PublicDoorbell({
                 exit={{ scale: 0.9, opacity: 0 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => cameraRef.current?.capture()}
-                className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.1)] group relative mt-4"
+                className="bg-black/10 dark:bg-white/10 backdrop-blur-md border border-black/10 dark:border-white/20 p-6 rounded-full shadow-[0_0_40px_rgba(0,0,0,0.1)] dark:shadow-[0_0_40px_rgba(255,255,255,0.1)] group relative mt-4"
               >
                 <div className="absolute inset-0 rounded-full border border-white/50 animate-ping opacity-20" />
-                <Camera className="w-10 h-10 text-white group-hover:scale-110 transition-transform" />
+                <Camera className="w-10 h-10 text-zinc-900 dark:text-white group-hover:scale-110 transition-transform" />
               </motion.button>
 
               <button
                 onClick={() => setStep("message")}
-                className="mt-8 text-sm text-zinc-400 hover:text-white underline decoration-zinc-600 underline-offset-4"
+                className="mt-8 text-sm text-text-muted dark:text-zinc-400 hover:text-text-main dark:hover:text-white underline decoration-zinc-400 dark:decoration-zinc-600 underline-offset-4"
               >
                 No puedo usar la cámara
               </button>
@@ -324,15 +324,15 @@ export default function PublicDoorbell({
                     onClick={() => handleRing(unit.id)}
                     disabled={isPending}
                     className="
-                        relative bg-zinc-900 border border-white/20 
+                        relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/20 
                         py-6 rounded-2xl flex flex-col items-center justify-center gap-2
-                        hover:bg-zinc-800 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]
+                        hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]
                         transition-all duration-300 group
                         shadow-lg
                     "
                   >
-                    <BellRing className="w-8 h-8 text-white group-hover:text-cyan-400 mb-1 drop-shadow-md" />
-                    <span className="font-sans text-2xl font-bold text-white tracking-wide">
+                    <BellRing className="w-8 h-8 text-zinc-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 mb-1 drop-shadow-md" />
+                    <span className="font-sans text-2xl font-bold text-zinc-900 dark:text-white tracking-wide">
                       {unit.label}
                     </span>
                     {/* Breathing Glow Effect */}
@@ -369,16 +369,16 @@ export default function PublicDoorbell({
                   <BellRing className="w-10 h-10 text-cyan-400" />
                 </div>
                 {/* Circular Progress or simple timer */}
-                <div className="absolute -bottom-2 -right-2 bg-zinc-900 border border-white/10 text-white text-xs font-bold w-8 h-8 flex items-center justify-center rounded-full">
+                <div className="absolute -bottom-2 -right-2 bg-zinc-900 dark:bg-zinc-900 border border-white/10 text-white text-xs font-bold w-8 h-8 flex items-center justify-center rounded-full">
                   {timeLeft}
                 </div>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
                   Llamando...
                 </h2>
-                <p className="text-zinc-400 text-sm max-w-[250px] mx-auto">
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-[250px] mx-auto">
                   Aguarde un momento mientras contactamos al propietario.
                 </p>
               </div>
@@ -400,20 +400,20 @@ export default function PublicDoorbell({
               animate={{ opacity: 1, y: 0 }}
               className="w-full max-w-sm space-y-4"
             >
-              <div className="bg-zinc-900/80 backdrop-blur border border-white/10 rounded-2xl p-6 text-center">
+              <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur border border-zinc-200 dark:border-white/10 rounded-2xl p-6 text-center">
                 <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Info className="w-6 h-6" />
                 </div>
-                <h3 className="text-white font-bold text-lg mb-2">
+                <h3 className="text-zinc-900 dark:text-white font-bold text-lg mb-2">
                   Sin Respuesta
                 </h3>
-                <p className="text-zinc-400 text-sm mb-4">
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-4">
                   El propietario no ha respondido. Puedes dejarle un mensaje
                   escrito.
                 </p>
                 <textarea
                   id="timeout-message"
-                  className="w-full bg-black/50 border border-zinc-700 rounded-xl p-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500 transition-colors resize-none h-24"
+                  className="w-full bg-zinc-100 dark:bg-black/50 border border-zinc-300 dark:border-zinc-700 rounded-xl p-3 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500 transition-colors resize-none h-24"
                   placeholder="Ej: Dejé el paquete en la guardia..."
                 />
               </div>
@@ -463,10 +463,10 @@ export default function PublicDoorbell({
               </div>
 
               <div>
-                <h2 className="text-3xl font-bold text-white mb-2">
+                <h2 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
                   ¡Puede Pasar!
                 </h2>
-                <p className="text-zinc-300 text-base">
+                <p className="text-zinc-600 dark:text-zinc-300 text-base">
                   La puerta ha sido abierta.
                 </p>
               </div>
@@ -477,7 +477,7 @@ export default function PublicDoorbell({
                 </p>
               </div>
 
-              <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: "100%" }}
                   animate={{ width: "0%" }}

@@ -135,7 +135,7 @@ export default async function DashboardPage() {
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10" />
 
                 {/* Bg Image Placeholder */}
-                <div className="absolute inset-0 z-0  dark:bg-zinc-400 bg-zinc-400">
+                <div className="absolute inset-0 z-0  dark:bg-zinc-600 bg-zinc-400">
                   {(() => {
                     let bgImage =
                       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";

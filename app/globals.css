@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-bg-app: var(--bg-app);
@@ -21,13 +22,13 @@
 :root {
   /* LIGHT MODE (Clean Paper/Glass) */
   --bg-app: #f4f4f5; /* Zinc 100 - Slightly darker to make white cards pop */
-  --bg-card: #FFFFFF; /* White */
-  --border-subtle: #E4E4E7; /* Zinc 200 */
+  --bg-card: #ffffff; /* White */
+  --border-subtle: #e4e4e7; /* Zinc 200 */
 
   /* Text & Primary */
-  --text-main: #09090B; /* Zinc 950 */
-  --text-muted: #71717A; /* Zinc 500 */
-  
+  --text-main: #09090b; /* Zinc 950 */
+  --text-muted: #71717a; /* Zinc 500 */
+
   --color-primary: #0891b2; /* Cyan-600 (Slightly darker for light mode contrast) */
   --color-primary-glow: rgba(8, 145, 178, 0.2);
 

@@ -11,8 +11,6 @@ interface Unit {
 
 export default function UnitSelector({
   units = [],
-  image,
-  onReset,
 }: {
   units?: Unit[];
   image?: string;
@@ -40,7 +38,7 @@ export default function UnitSelector({
         <select
           value={currentUnitId}
           onChange={handleSelect}
-          className="w-full bg-zinc-900 border border-zinc-700 text-white p-3 pr-10 rounded-lg appearance-none focus:ring-2 focus:ring-cyan-500 outline-none"
+          className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white p-3 pr-10 rounded-lg appearance-none focus:ring-2 focus:ring-cyan-500 outline-none"
         >
           {units.map((u) => (
             <option key={u.id} value={u.id}>

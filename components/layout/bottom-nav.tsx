@@ -41,7 +41,7 @@ export function BottomNav({ role }: { role?: string }) {
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-50">
       {/* More Menu Popup */}
       {isMoreOpen && (
-        <div className="absolute bottom-full mb-3 right-0 w-48 bg-zinc-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-200 origin-bottom-right">
+        <div className="absolute bottom-full mb-3 right-0 w-48 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-200 origin-bottom-right">
           <div className="flex flex-col p-1">
             {moreLinks.map((link) => (
               <Link
@@ -50,8 +50,8 @@ export function BottomNav({ role }: { role?: string }) {
                 className={clsx(
                   "flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors",
                   pathname === link.href
-                    ? "text-white bg-white/5"
-                    : "text-zinc-400"
+                    ? "text-zinc-900 dark:text-white bg-zinc-100 dark:bg-white/5"
+                    : "text-zinc-500 dark:text-zinc-400"
                 )}
               >
                 <link.icon className="w-5 h-5" />
@@ -63,7 +63,7 @@ export function BottomNav({ role }: { role?: string }) {
       )}
 
       {/* Main Bar */}
-      <div className="bg-zinc-900/90 backdrop-blur-2xl border border-white/10 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)] px-2 py-2 flex justify-between items-center relative">
+      <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200 dark:border-white/10 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] px-2 py-2 flex justify-between items-center relative">
         {mainLinks.map(({ href, icon: Icon, label }) => {
           const isActive =
             pathname === href ||
@@ -74,11 +74,13 @@ export function BottomNav({ role }: { role?: string }) {
               href={href}
               className={clsx(
                 "relative flex flex-col items-center justify-center w-full h-12 rounded-full transition-all duration-300",
-                isActive ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                isActive
+                  ? "text-zinc-900 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
               {isActive && (
-                <div className="absolute inset-0 bg-white/10 rounded-full -z-10 animate-in fade-in zoom-in duration-200" />
+                <div className="absolute inset-0 bg-zinc-100 dark:bg-white/10 rounded-full -z-10 animate-in fade-in zoom-in duration-200" />
               )}
               <Icon
                 strokeWidth={isActive ? 2.5 : 2}
@@ -90,7 +92,7 @@ export function BottomNav({ role }: { role?: string }) {
               <span
                 className={clsx(
                   "text-[9px] font-medium tracking-wide mt-0.5 transition-colors duration-200",
-                  isActive ? "text-white" : "text-zinc-500"
+                  isActive ? "text-zinc-900 dark:text-white" : "text-zinc-500"
                 )}
               >
                 {label}
@@ -104,11 +106,13 @@ export function BottomNav({ role }: { role?: string }) {
           onClick={() => setIsMoreOpen(!isMoreOpen)}
           className={clsx(
             "relative flex flex-col items-center justify-center w-full h-12 rounded-full transition-all duration-300",
-            isMoreOpen ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+            isMoreOpen
+              ? "text-zinc-900 dark:text-white"
+              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
           )}
         >
           {isMoreOpen && (
-            <div className="absolute inset-0 bg-white/10 rounded-full -z-10 animate-in fade-in zoom-in duration-200" />
+            <div className="absolute inset-0 bg-zinc-100 dark:bg-white/10 rounded-full -z-10 animate-in fade-in zoom-in duration-200" />
           )}
           <MoreHorizontal
             strokeWidth={isMoreOpen ? 2.5 : 2}
@@ -120,7 +124,7 @@ export function BottomNav({ role }: { role?: string }) {
           <span
             className={clsx(
               "text-[9px] font-medium tracking-wide mt-0.5 transition-colors duration-200",
-              isMoreOpen ? "text-white" : "text-zinc-500"
+              isMoreOpen ? "text-zinc-900 dark:text-white" : "text-zinc-500"
             )}
           >
             Más

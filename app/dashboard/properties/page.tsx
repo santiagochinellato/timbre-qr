@@ -42,15 +42,19 @@ export default async function PropertiesPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Mis Propiedades</h1>
-        <p className="text-zinc-400">
+        <h1 className="text-3xl font-bold text-text-main dark:text-white mb-2">
+          Mis Propiedades
+        </h1>
+        <p className="text-text-muted dark:text-zinc-400">
           Selecciona un edificio para gestionar el acceso.
         </p>
       </div>
 
       {groupedBuildings.length === 0 ? (
-        <div className="p-8 text-center bg-zinc-900/50 border border-white/10 rounded-2xl">
-          <p className="text-zinc-500">No tienes propiedades asignadas.</p>
+        <div className="p-8 text-center bg-bg-card dark:bg-zinc-900/50 border border-border-subtle dark:border-white/10 rounded-2xl">
+          <p className="text-text-muted dark:text-zinc-500">
+            No tienes propiedades asignadas.
+          </p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
@@ -59,10 +63,10 @@ export default async function PropertiesPage() {
             <Link
               key={building.name}
               href={`/dashboard/properties/${building.units[0].unitId}`}
-              className="group relative h-64 rounded-3xl overflow-hidden border border-white/10 hover:border-cyan-500/50 transition-all duration-500 hover:shadow-[0_0_40px_rgba(6,182,212,0.2)]"
+              className="group relative h-64 rounded-3xl overflow-hidden border border-border-subtle dark:border-white/10 hover:border-primary/50 transition-all duration-500 hover:shadow-[0_0_40px_rgba(6,182,212,0.2)]"
             >
               {/* Background Image & Gradient */}
-              <div className="absolute inset-0 bg-zinc-900">
+              <div className="absolute inset-0 bg-zinc-400 dark:bg-zinc-900">
                 {(() => {
                   let bgImage =
                     "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";

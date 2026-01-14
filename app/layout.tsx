@@ -35,7 +35,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} no-scrollbar`}
       suppressHydrationWarning
     >
-      <body className="antialiased bg-bg-app text-text-main tracking-tight font-medium min-h-dvh flex flex-col pt-safe pb-safe overflow-x-hidden font-sans">
+      <body
+        className="antialiased bg-bg-app text-text-main tracking-tight font-medium min-h-dvh flex flex-col pt-safe pb-safe overflow-x-hidden font-sans"
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
