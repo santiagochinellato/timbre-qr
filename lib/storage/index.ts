@@ -5,9 +5,15 @@ export async function uploadFile(file: File): Promise<string> {
   const provider = process.env.STORAGE_PROVIDER || "local";
 
   if (provider === "local") {
-    // Determine if we are in a Vercel-like environment where local fs is readonly/ephemeral
+    // If running on Vercel, local filesystem is not persistent/writable for public usage.
+    // Fallback to Base64 encoding (storing image in DB as text) for the demo.
     if (process.env.VERCEL) {
-        console.warn("⚠️ STORAGE_PROVIDER is 'local' but running on Vercel. Images will be lost/unreachable.");
+        console.log("⚠️ Vercel detected with local storage. Using Base64 fallback.");
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const base64 = buffer.toString("base64");
+        const mimeType = file.type || "image/jpeg";
+        return `data:${mimeType};base64,${base64}`;
     }
     return saveLocalFile(file);
   }

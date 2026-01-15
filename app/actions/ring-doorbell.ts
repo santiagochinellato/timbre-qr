@@ -20,18 +20,31 @@ export async function ringDoorbell(prevState: any, formData: FormData) {
 
     // 1. Image Handling
     console.log(`[RingDoorbell] Received ring request for unit ${unitId}`);
-    console.log(`[RingDoorbell] Image file present?`, !!imageFile);
-    if(imageFile) {
-        console.log(`[RingDoorbell] File details: name=${imageFile.name}, size=${imageFile.size}, type=${imageFile.type}`);
-    }
+    
+    // Log all keys
+    const keys = Array.from(formData.keys());
+    console.log(`[RingDoorbell] FormData Keys: ${keys.join(", ")}`);
 
-    if (imageFile && imageFile.size > 0) {
-        try {
-            const { uploadFile } = await import("@/lib/storage");
-            photoUrl = await uploadFile(imageFile);
-        } catch (error) {
-            console.error("❌ Failed to save image:", error);
+    const imageEntry = formData.get("image");
+    console.log(`[RingDoorbell] Image Entry Type: ${typeof imageEntry}, Is File? ${imageEntry instanceof File}`);
+
+    if (imageEntry instanceof File) {
+        console.log(`[RingDoorbell] File details: name=${imageEntry.name}, size=${imageEntry.size}, type=${imageEntry.type}`);
+        
+        if (imageEntry.size > 0) {
+            try {
+                console.log("[RingDoorbell] Attempting upload...");
+                const { uploadFile } = await import("@/lib/storage");
+                photoUrl = await uploadFile(imageEntry);
+                console.log(`[RingDoorbell] Upload success. URL: ${photoUrl}`);
+            } catch (error) {
+                console.error("❌ Failed to save image:", error);
+            }
+        } else {
+             console.warn("[RingDoorbell] File size is 0");
         }
+    } else {
+        console.warn("[RingDoorbell] 'image' is not a File instance");
     }
 
     try {
