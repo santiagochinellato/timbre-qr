@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Unlock, RefreshCw } from "lucide-react";
+import { Unlock, X } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
 import { checkUnitStatus } from "@/app/actions/check-status";
-import { accessLogs } from "@/db/schema"; // Type only if needed, can infer
+import { rejectCall } from "@/app/actions/reject-call";
+import { toast } from "sonner";
+import { accessLogs } from "@/db/schema";
 
-// Define types locally if not available easily from schema in client
 type LogType = typeof accessLogs.$inferSelect;
 
 interface DoorCardProps {
@@ -28,32 +29,51 @@ export function DoorCard({
   const [activeRing, setActiveRing] = useState<LogType | null | undefined>(
     initialLog?.status === "ringing" ? initialLog : null
   );
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
 
   // Polling Effect
   useEffect(() => {
     const interval = setInterval(async () => {
-      // setIsRefreshing(true); // Don't show visual loader on every poll, too distracting
       const res = await checkUnitStatus(unitId);
 
       if (res.isRinging && res.log) {
-        // If we found a ringing log
+        // Found a ringing log
+        // Update if it's a NEW log OR if we currently have no active ring
         if (!activeRing || activeRing.id !== res.log.id) {
           setActiveRing(res.log);
-          router.refresh(); // Sync server state too if needed
+          router.refresh();
         }
       } else {
-        // If not ringing anymore
+        // No ringing log found on server
+        // If we currently show a ring, we should clear it (it was handled or timed out)
         if (activeRing) {
           setActiveRing(null);
           router.refresh();
         }
       }
-      // setIsRefreshing(false);
-    }, 3000); // Check every 3 seconds
+    }, 2000); // Poll every 2 seconds for faster updates
 
     return () => clearInterval(interval);
   }, [unitId, activeRing, router]);
+
+  const handleReject = async () => {
+    if (!activeRing) return;
+    setRejecting(true);
+    try {
+      const res = await rejectCall(activeRing.id);
+      if (res.success) {
+        toast.success("Llamada rechazada");
+        setActiveRing(null); // Immediate UI update
+        router.refresh();
+      } else {
+        toast.error("Error al rechazar");
+      }
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setRejecting(false);
+    }
+  };
 
   return (
     <div className="relative bg-bg-card backdrop-blur-xl border border-border-subtle rounded-2xl overflow-hidden shadow-sm transition-all duration-500">
@@ -138,6 +158,10 @@ export function DoorCard({
                 logId={activeRing.id}
                 type="building"
                 label="Entrada Principal"
+                onOpenSuccess={() => {
+                  setActiveRing(null);
+                  router.refresh();
+                }}
               />
             )}
 
@@ -151,6 +175,10 @@ export function DoorCard({
                   buildingMqttTopic ? "Entrada Departamento" : "Entrada Única"
                 }
                 className="mt-2"
+                onOpenSuccess={() => {
+                  setActiveRing(null);
+                  router.refresh();
+                }}
               />
             )}
 
@@ -161,8 +189,24 @@ export function DoorCard({
                 logId={activeRing.id}
                 type="default"
                 label="Entrada Principal"
+                onOpenSuccess={() => {
+                  setActiveRing(null);
+                  router.refresh();
+                }}
               />
             )}
+
+            {/* REJECT BUTTON */}
+            <div className="pt-2 border-t border-border-subtle mt-4">
+              <button
+                onClick={handleReject}
+                disabled={rejecting}
+                className="w-full py-3 rounded-xl flex items-center justify-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium text-sm"
+              >
+                <X className="w-4 h-4" />
+                {rejecting ? "Rechazando..." : "Rechazar Entrada"}
+              </button>
+            </div>
           </div>
         )}
       </div>

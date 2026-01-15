@@ -19,6 +19,12 @@ export async function ringDoorbell(prevState: any, formData: FormData) {
     let photoUrl = null;
 
     // 1. Image Handling
+    console.log(`[RingDoorbell] Received ring request for unit ${unitId}`);
+    console.log(`[RingDoorbell] Image file present?`, !!imageFile);
+    if(imageFile) {
+        console.log(`[RingDoorbell] File details: name=${imageFile.name}, size=${imageFile.size}, type=${imageFile.type}`);
+    }
+
     if (imageFile && imageFile.size > 0) {
         try {
             const { uploadFile } = await import("@/lib/storage");

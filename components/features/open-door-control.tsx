@@ -13,11 +13,13 @@ export default function OpenDoorControl({
   type,
   label,
   className = "",
+  onOpenSuccess,
 }: {
   logId: string;
   type: "building" | "unit" | "default";
   label: string;
   className?: string;
+  onOpenSuccess?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +29,7 @@ export default function OpenDoorControl({
       const res = await openDoor(logId, type);
       if (res.success) {
         toast.success("¡Puerta Abierta con éxito!");
+        if (onOpenSuccess) onOpenSuccess();
       } else {
         toast.error("Error al abrir: " + res.message);
       }
