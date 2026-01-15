@@ -60,6 +60,25 @@ export default async function PropertyDetailPage({
       );
   }
 
+  // Check status of sibling units to show indicators
+  const siblingIds = siblingUnits.map((s) => s.unitId);
+  let ringingSiblingIds = new Set<string>();
+
+  if (siblingIds.length > 0) {
+    const activeSiblingRings = await db.query.accessLogs.findMany({
+      where: (logs, { and, inArray, eq, gt }) =>
+        and(
+          inArray(logs.unitId, siblingIds),
+          eq(logs.status, "ringing"),
+          gt(logs.createdAt, new Date(Date.now() - 2 * 60 * 1000))
+        ),
+      columns: { unitId: true },
+    });
+    ringingSiblingIds = new Set(
+      activeSiblingRings.map((r) => r.unitId).filter(Boolean) as string[]
+    );
+  }
+
   // Fetch logs for history
   const logs = await db.query.accessLogs.findMany({
     where: eq(accessLogs.unitId, id),
@@ -175,37 +194,44 @@ export default async function PropertyDetailPage({
             Otras Unidades en {unit.buildingName}
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            {siblingUnits.map((sibling) => (
-              <Link
-                key={sibling.unitId}
-                href={`/dashboard/properties/${sibling.unitId}`}
-                className="group p-4 bg-bg-card border border-border-subtle rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-primary/30 transition-all flex items-center justify-between shadow-sm"
-              >
-                <div>
-                  <div className="text-xs text-text-muted font-medium uppercase mb-1">
-                    Unidad
+            {siblingUnits.map((sibling) => {
+              const isRinging = ringingSiblingIds.has(sibling.unitId);
+              return (
+                <Link
+                  key={sibling.unitId}
+                  href={`/dashboard/properties/${sibling.unitId}`}
+                  className={`group p-4 bg-bg-card border rounded-2xl transition-all flex items-center justify-between shadow-sm ${
+                    isRinging
+                      ? "border-red-500 bg-red-500/5 hover:bg-red-500/10 animate-pulse"
+                      : "border-border-subtle hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-primary/30"
+                  }`}
+                >
+                  <div>
+                    <div className="text-xs text-text-muted font-medium uppercase mb-1">
+                      Unidad
+                    </div>
+                    <div className="text-lg font-bold text-text-main group-hover:text-primary transition-colors">
+                      {sibling.label}
+                    </div>
                   </div>
-                  <div className="text-lg font-bold text-text-main group-hover:text-primary transition-colors">
-                    {sibling.label}
+                  <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
                   </div>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-primary/20 group-hover:text-primary transition-colors">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

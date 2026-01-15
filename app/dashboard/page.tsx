@@ -78,6 +78,9 @@ export default async function DashboardPage() {
         eq(logs.status, "ringing"),
         gt(logs.createdAt, new Date(Date.now() - 2 * 60 * 1000)) // eslint-disable-line
       ),
+    with: {
+      unit: true,
+    },
     columns: { unitId: true },
   });
 
@@ -118,14 +121,25 @@ export default async function DashboardPage() {
             // we technically need to check ALL units associated with this building.
             // However, 'allUserUnits' has all of them.
 
-            const isBuildingRinging = allUserUnits
-              .filter((u) => u.buildingName === bldg.buildingName)
-              .some((u) => ringingUnitIds.has(u.unitId));
+            // Find the active ring for this building
+            const activeRingForBuilding = activeRings.find((r) =>
+              allUserUnits.some(
+                (u) =>
+                  u.unitId === r.unitId && u.buildingName === bldg.buildingName
+              )
+            );
+
+            const isBuildingRinging = !!activeRingForBuilding;
+            const ringingLabel = activeRingForBuilding?.unit?.label;
 
             return (
               <Link
                 key={bldg.buildingSlug}
-                href={`/dashboard/properties/${bldg.unitId}`}
+                href={`/dashboard/properties/${
+                  activeRingForBuilding
+                    ? activeRingForBuilding.unitId
+                    : bldg.unitId
+                }`} // Direct to ringing unit if active
                 className={`col-span-1 relative group overflow-hidden rounded-3xl border bg-bg-card backdrop-blur-xl transition-all duration-300 h-64 ${
                   isBuildingRinging
                     ? "border-status-alert/80 shadow-[0_0_50px_rgba(239,68,68,0.4)] animate-pulse"
@@ -176,7 +190,10 @@ export default async function DashboardPage() {
                       </div>
                     ) : null}
                     <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">
-                      Entrada Principal
+                      {/* Show Unit Label if Ringing, else generic entrance */}
+                      {isBuildingRinging
+                        ? `Unidad ${ringingLabel}`
+                        : "Entrada Principal"}
                     </h3>
                     <p className="text-zinc-200 text-sm drop-shadow-md shadow-black">
                       {isBuildingRinging
