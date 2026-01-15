@@ -6,22 +6,34 @@ import { eq, desc } from "drizzle-orm";
 
 export async function checkUnitStatus(unitId: string) {
   try {
-    // Look for any 'ringing' log from the last 10 minutes (increased window for safety)
-    const timeWindow = new Date(Date.now() - 10 * 60 * 1000); 
-
+    // 1. Fetch the latest RINGING log (active)
     const ringingLog = await db.query.accessLogs.findFirst({
-      where: (logs, { eq, and, gt }) => and(
+      where: (logs, { eq, and }) => and(
           eq(logs.unitId, unitId),
-          eq(logs.status, "ringing"),
-          gt(logs.createdAt, timeWindow)
+          eq(logs.status, "ringing")
       ),
       orderBy: [desc(accessLogs.createdAt)],
     });
 
-    // Debugging
-    // console.log(`[CheckStatus] Unit ${unitId}: Found ringing?`, !!ringingLog);
-
     if (ringingLog) {
+        const now = new Date();
+        const logTime = new Date(ringingLog.createdAt || now);
+        const ageInMs = now.getTime() - logTime.getTime();
+        const TWO_MINUTES = 2 * 60 * 1000;
+
+        // 2. Check Age
+        if (ageInMs > TWO_MINUTES) {
+            // STALE RING: Cleanup immediately
+            console.log(`[CheckStatus] Auto-expiring stale ring ${ringingLog.id} (Age: ${Math.round(ageInMs/1000)}s)`);
+            
+            await db.update(accessLogs)
+                .set({ status: 'missed' })
+                .where(eq(accessLogs.id, ringingLog.id));
+
+            return { isRinging: false, log: null };
+        }
+
+        // 3. Valid Ring
         return { isRinging: true, log: ringingLog };
     }
 
