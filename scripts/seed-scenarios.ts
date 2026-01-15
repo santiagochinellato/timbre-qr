@@ -103,11 +103,8 @@ async function seed() {
       slug: "demo-cauquen",
       mqttTopic: "cauquen/gate",
       // Live feed URL (e.g., public webcam or placeholder)
-      cameraUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop", // Using static image as placeholder for now, or could use youtube embed logic if needed
-      // If user wants REAL live camera, we can use the youtube ID from the code: "San Carlos de Bariloche En vivo"
-      // Let's assume the frontend handles the youtube embed if the URL is a youtube link? 
-      // For now, let's leave valid text. The previous code had hardcoded logic for youtube.
-      // We will likely update the frontend to check this field.
+      cameraUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop", 
+      enableVisitorCamera: false, // TOTEM MODE: No visitor selfie
   }).returning();
 
   // Create 10 units

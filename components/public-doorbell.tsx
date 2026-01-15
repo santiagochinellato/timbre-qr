@@ -43,6 +43,7 @@ interface Unit {
 interface PublicDoorbellProps {
   propertyId: string;
   propertyName: string;
+  enableVisitorCamera?: boolean;
 }
 
 // --- VARIANTES DE ANIMACIÓN ---
@@ -56,10 +57,14 @@ const fadeVariants = {
 export default function PublicDoorbell({
   propertyId,
   propertyName,
+  enableVisitorCamera = true,
 }: PublicDoorbellProps) {
   // Estados Globales
   const [view, setView] = useState<ViewState>("landing");
-  const [actionMode, setActionMode] = useState<ActionMode>("photo");
+  // Default to message if camera disabled, else photo
+  const [actionMode, setActionMode] = useState<ActionMode>(
+    enableVisitorCamera ? "photo" : "message"
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Datos
@@ -133,9 +138,10 @@ export default function PublicDoorbell({
   // 2. Manejo de Permisos (Reales)
   const requestPermissions = async () => {
     try {
-      // 1. Pedir Cámara (Bloqueante)
-      // Esto disparará el popup del navegador inmediatamente
-      await navigator.mediaDevices.getUserMedia({ video: true });
+      // 1. Pedir Cámara (Solo si está habilitada)
+      if (enableVisitorCamera) {
+        await navigator.mediaDevices.getUserMedia({ video: true });
+      }
 
       // 2. Pedir Ubicación (No bloqueante / Opcional)
       if ("geolocation" in navigator) {
@@ -145,7 +151,7 @@ export default function PublicDoorbell({
         );
       }
 
-      // Si la cámara fue autorizada, avanzamos
+      // Si todo OK, avanzamos
       setView("directory");
     } catch (err) {
       console.error("Permisos de cámara denegados", err);
@@ -160,7 +166,7 @@ export default function PublicDoorbell({
     setImgSrc(null);
     setTextMessage("");
     setCameraError(false);
-    setActionMode("photo");
+    setActionMode(enableVisitorCamera ? "photo" : "message");
     setView("action_mode");
   };
 
@@ -257,9 +263,11 @@ export default function PublicDoorbell({
             <Header />
             <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 p-8 rounded-3xl w-full space-y-6 shadow-xl">
               <div className="flex justify-center gap-4 text-cyan-600 dark:text-cyan-400">
-                <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-full">
-                  <Camera size={28} />
-                </div>
+                {enableVisitorCamera && (
+                  <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-full">
+                    <Camera size={28} />
+                  </div>
+                )}
                 <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-full">
                   <MapPin size={28} />
                 </div>
@@ -268,7 +276,8 @@ export default function PublicDoorbell({
                 <h2 className="text-lg font-semibold">Antes de empezar</h2>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   Para tu seguridad y la del edificio, esta aplicación necesita
-                  acceso temporal a tu <b>cámara</b> y <b>ubicación</b>.
+                  acceso temporal a tu {enableVisitorCamera && <b>cámara y </b>}{" "}
+                  <b>ubicación</b>.
                 </p>
               </div>
               <Button
@@ -285,8 +294,10 @@ export default function PublicDoorbell({
           </motion.div>
         )}
 
-        {/* === VISTA 1: DIRECTORIO === */}
+        {/* ... (Directory View is same) ... */}
         {view === "directory" && (
+          // ... copy existing Directory View ...
+          // (Using existing code structure, simpler to leave this big block alone if not changing logic)
           <motion.div
             key="directory"
             {...fadeVariants}
@@ -383,11 +394,12 @@ export default function PublicDoorbell({
               <div
                 className={cn(
                   "absolute inset-0 transition-opacity duration-500 ease-in-out",
-                  actionMode === "photo"
+                  actionMode === "photo" && enableVisitorCamera
                     ? "opacity-100 z-10"
                     : "opacity-0 pointer-events-none"
                 )}
               >
+                {/* ... (Camera Content) ... */}
                 {imgSrc ? (
                   // Preview
                   <div className="relative w-full h-full">
@@ -491,7 +503,9 @@ export default function PublicDoorbell({
             {/* --- PANEL DE CONTROL INFERIOR (REDDISEÑADO) --- */}
             <div className="relative z-30 bg-zinc-900 border-t border-zinc-800 p-6 pb-8 space-y-6 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
               {/* 1. Selector de Modo (Tabs Descriptivos) */}
-              {!imgSrc && (
+
+              {/* ONLY SHOW TABS IF VISITOR CAMERA ENABLED */}
+              {enableVisitorCamera && !imgSrc && (
                 <div className="grid grid-cols-2 gap-3 p-1 bg-zinc-950/50 rounded-2xl border border-white/5">
                   <button
                     onClick={() => setActionMode("photo")}
@@ -546,7 +560,7 @@ export default function PublicDoorbell({
                 )}
 
                 {/* Botón Principal Dinámico */}
-                {actionMode === "photo" && !imgSrc ? (
+                {actionMode === "photo" && !imgSrc && enableVisitorCamera ? (
                   <Button
                     onClick={capture}
                     className="w-full h-14 bg-white text-black hover:bg-zinc-200 rounded-xl text-lg font-bold shadow-lg shadow-white/10"
@@ -567,7 +581,7 @@ export default function PublicDoorbell({
                     <Bell className="mr-2 w-5 h-5" />
                     {actionMode === "photo"
                       ? "Timbrar con Foto"
-                      : "Timbrar con Mensaje"}
+                      : "Timbrar (Enviar)"}
                   </Button>
                 )}
               </div>

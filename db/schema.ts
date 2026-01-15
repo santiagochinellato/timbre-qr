@@ -26,6 +26,7 @@ export const buildings = pgTable('buildings', {
     mqttTopic: text('mqtt_topic'),
     active: boolean('active').default(true),
     cameraUrl: text('camera_url'), // For CCTV/Live Feed
+    enableVisitorCamera: boolean('enable_visitor_camera').default(true), // If false, disables visitor selfie flow (e.g. for Totems)
 });
 
 export const units = pgTable('units', {

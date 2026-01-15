@@ -18,6 +18,10 @@ export default async function BuildingPage({
   if (!building) notFound();
 
   return (
-    <PublicDoorbell propertyId={building.id} propertyName={building.name} />
+    <PublicDoorbell
+      propertyId={building.id}
+      propertyName={building.name}
+      enableVisitorCamera={building.enableVisitorCamera ?? true} // Default to true if null
+    />
   );
 }
