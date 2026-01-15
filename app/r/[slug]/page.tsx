@@ -17,11 +17,7 @@ export default async function BuildingPage({
 
   if (!building) notFound();
 
-  const buildingUnits = await db
-    .select({ id: units.id, label: units.label })
-    .from(units)
-    .where(eq(units.buildingId, building.id))
-    .orderBy(units.label);
-
-  return <PublicDoorbell buildingName={building.name} units={buildingUnits} />;
+  return (
+    <PublicDoorbell propertyId={building.id} propertyName={building.name} />
+  );
 }

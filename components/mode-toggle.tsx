@@ -1,11 +1,19 @@
 "use client";
 
-import * as React from "react";
+import { useState, useEffect } from "react";
 import { Moon, Sun, Laptop } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export function ModeToggle() {
-  const { setTheme, theme } = useTheme();
+  const { setTheme, theme: resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent hydration mismatch by defaulting to undefined until mounted
+  const theme = mounted ? resolvedTheme : undefined;
 
   return (
     <div className="flex items-center gap-2 border border-border-subtle rounded-full p-1 bg-bg-card">
