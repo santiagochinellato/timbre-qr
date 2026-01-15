@@ -1,6 +1,7 @@
 interface CameraFeedProps {
   url?: string | null;
   className?: string;
+  refreshInterval?: number;
 }
 
 export function CameraFeed({ url, className = "" }: CameraFeedProps) {
