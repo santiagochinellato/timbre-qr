@@ -8,16 +8,11 @@ export function CameraFeed({
     <div
       className={`relative bg-black rounded-xl overflow-hidden ${className}`}
     >
-      <iframe
-        width="100%"
-        height="100%"
-        src="https://www.youtube.com/embed/6-cDe1uUTqc?autoplay=1&mute=1&controls=0&playsinline=1&rel=0"
-        title="Live Camera Feed"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-        className="w-full h-full object-cover"
-      />
+      <div className="w-full h-full bg-zinc-950 flex flex-col items-center justify-center text-zinc-500">
+        <span className="text-xs uppercase tracking-widest mb-2 font-medium">
+          Cámara no disponible
+        </span>
+      </div>
 
       {/* Status Overlay */}
       <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">

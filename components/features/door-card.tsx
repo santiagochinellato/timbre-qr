@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Unlock, X } from "lucide-react";
+import {
+  Unlock,
+  X,
+  MessageSquare,
+  MoreVertical,
+  Camera,
+  Archive,
+} from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
 import { CameraFeed } from "./camera-feed";
 import { sendResponse } from "@/app/actions/send-response";
-import { MessageSquare } from "lucide-react";
 import { checkUnitStatus } from "@/app/actions/check-status";
 import { rejectCall } from "@/app/actions/reject-call";
 import { toast } from "sonner";
@@ -37,6 +43,22 @@ export function DoorCard({
   const [responding, setResponding] = useState(false);
   const [customResponse, setCustomResponse] = useState("");
   const [responseSent, setResponseSent] = useState(false);
+  // View Mode: 'camera' | 'photo'. Default depends on config.
+  // If we have cameraUrl AND visitorPhoto, default to photo (to see who ringed), but allow toggle.
+  // If only cameraUrl, default camera.
+  // If only photo, default photo.
+  const [viewMode, setViewMode] = useState<"camera" | "photo">(
+    initialLog?.visitorPhotoUrl ? "photo" : "camera"
+  );
+
+  // Auto-switch view on new ring
+  useEffect(() => {
+    if (activeRing?.visitorPhotoUrl) {
+      setViewMode("photo");
+    } else if (cameraUrl) {
+      setViewMode("camera");
+    }
+  }, [activeRing, cameraUrl]);
 
   // Polling Effect
   useEffect(() => {
@@ -114,16 +136,51 @@ export function DoorCard({
         {/* Ringing Visual */}
         {activeRing ? (
           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
-            {cameraUrl ? (
+            {viewMode === "camera" && cameraUrl ? (
               /* Fixed Camera Feed (e.g. Totem or PH) */
               <img
                 src={cameraUrl}
                 className="w-full h-full object-cover"
                 alt="Live Feed"
               />
+            ) : viewMode === "photo" && activeRing?.visitorPhotoUrl ? (
+              /* Visitor Photo (Snapshot) */
+              <img
+                src={activeRing.visitorPhotoUrl}
+                className="w-full h-full object-cover"
+                alt="Visitor"
+              />
             ) : (
-              /* Standard WebRTC/Visitor Feed */
-              <CameraFeed className="w-full h-full" />
+              /* Placeholder / Logic while ringing if no photo */
+              <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-zinc-800 animate-pulse flex items-center justify-center">
+                  <Camera className="text-zinc-500 w-8 h-8" />
+                </div>
+              </div>
+            )}
+
+            {/* Toggle Button for Hybrid (PH) Scenarios */}
+            {cameraUrl && activeRing?.visitorPhotoUrl && (
+              <div className="absolute top-2 right-2 z-20">
+                <button
+                  onClick={() =>
+                    setViewMode((prev) =>
+                      prev === "photo" ? "camera" : "photo"
+                    )
+                  }
+                  className="bg-black/50 hover:bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold border border-white/20 flex items-center gap-2 transition-colors"
+                >
+                  {viewMode === "photo" ? (
+                    <>
+                      <Camera className="w-3 h-3" /> Ver Cámara en Vivo
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-3 h-3" /> Ver Foto Visitante
+                    </>
+                  )}
+                </button>
+              </div>
             )}
 
             {/* Visual Softening Overlay */}
