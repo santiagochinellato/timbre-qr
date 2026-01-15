@@ -111,7 +111,26 @@ export function DoorCard({
       <div className="p-6 flex flex-col items-center gap-6">
         {/* Ringing Visual */}
         {activeRing ? (
-          <CameraFeed className="w-full aspect-video shadow-inner border border-border-subtle dark:border-white/10" />
+          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
+            <CameraFeed className="w-full h-full" />
+
+            {/* Visual Softening Overlay */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+
+            {/* Visitor Message Overlay */}
+            {activeRing.message && (
+              <div className="absolute bottom-4 left-4 right-4 animate-in slide-in-from-bottom-2 fade-in duration-500">
+                <div className="bg-black/40 backdrop-blur-md border border-white/10 p-3 rounded-lg">
+                  <span className="text-white/60 text-[10px] font-bold uppercase tracking-wider block mb-1">
+                    Mensaje del Visitante
+                  </span>
+                  <p className="text-white text-lg font-serif italic leading-snug">
+                    &quot;{activeRing.message}&quot;
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center border border-border-subtle shadow-inner">
             <Unlock className="w-10 h-10 text-text-muted" />
