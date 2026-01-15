@@ -17,7 +17,7 @@ async function checkLogs() {
   .from(accessLogs)
   .innerJoin(units, eq(accessLogs.unitId, units.id))
   .innerJoin(buildings, eq(units.buildingId, buildings.id))
-  .where(eq(buildings.slug, "demo-center"))
+  .where(eq(buildings.slug, "demo-ph"))
   .orderBy(desc(accessLogs.createdAt))
   .limit(5);
 
