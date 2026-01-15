@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Unlock, X } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
+import { CameraFeed } from "./camera-feed";
+import { sendResponse } from "@/app/actions/send-response";
+import { MessageSquare } from "lucide-react";
 import { checkUnitStatus } from "@/app/actions/check-status";
 import { rejectCall } from "@/app/actions/reject-call";
 import { toast } from "sonner";
@@ -30,6 +32,9 @@ export function DoorCard({
     initialLog?.status === "ringing" ? initialLog : null
   );
   const [rejecting, setRejecting] = useState(false);
+  const [responding, setResponding] = useState(false);
+  const [customResponse, setCustomResponse] = useState("");
+  const [responseSent, setResponseSent] = useState(false);
 
   // Polling Effect
   useEffect(() => {
@@ -75,6 +80,25 @@ export function DoorCard({
     }
   };
 
+  const handleSendResponse = async (msg: string) => {
+    if (!activeRing) return;
+    setResponding(true);
+    try {
+      const res = await sendResponse(activeRing.id, msg);
+      if (res.success) {
+        toast.success("Mensaje enviado");
+        setResponseSent(true);
+        setCustomResponse("");
+      } else {
+        toast.error("Error al enviar mensaje");
+      }
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setResponding(false);
+    }
+  };
+
   return (
     <div className="relative bg-bg-card backdrop-blur-xl border border-border-subtle rounded-2xl overflow-hidden shadow-sm transition-all duration-500">
       {/* Status Indicator */}
@@ -87,47 +111,7 @@ export function DoorCard({
       <div className="p-6 flex flex-col items-center gap-6">
         {/* Ringing Visual */}
         {activeRing ? (
-          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-100 dark:bg-black border border-border-subtle dark:border-white/10 shadow-inner flex flex-col">
-            {activeRing.visitorPhotoUrl &&
-            !activeRing.visitorPhotoUrl.startsWith("MSG:") ? (
-              <>
-                <Image
-                  src={activeRing.visitorPhotoUrl}
-                  alt="Visitor"
-                  fill
-                  className="object-cover"
-                />
-                {/* Overlay Message if Photo Exists */}
-                {activeRing.message && (
-                  <div className="absolute bottom-0 inset-x-0 bg-white/95 dark:bg-black/60 backdrop-blur-sm p-3 text-center border-t border-border-subtle dark:border-white/5">
-                    <p className="text-text-main dark:text-white text-sm font-medium italic">
-                      "{activeRing.message}"
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="h-full w-full flex flex-col items-center justify-center p-6 text-center">
-                {activeRing.message ? (
-                  <div className="space-y-2">
-                    <span className="text-text-muted text-xs uppercase tracking-widest font-bold">
-                      Mensaje del Visitante
-                    </span>
-                    <p className="text-text-main dark:text-white text-xl md:text-2xl font-serif italic leading-relaxed">
-                      "{activeRing.message}"
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-zinc-500 flex flex-col items-center gap-2">
-                    <span className="text-sm">Cámara desconectada</span>
-                  </div>
-                )}
-              </div>
-            )}
-            <div className="absolute top-3 left-3 px-2 py-1 bg-alert/80 backdrop-blur text-white text-[10px] font-bold rounded uppercase tracking-wider animate-pulse z-10">
-              Live
-            </div>
-          </div>
+          <CameraFeed className="w-full aspect-video shadow-inner border border-border-subtle dark:border-white/10" />
         ) : (
           <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800/50 flex items-center justify-center border border-border-subtle shadow-inner">
             <Unlock className="w-10 h-10 text-text-muted" />
@@ -195,6 +179,66 @@ export function DoorCard({
                 }}
               />
             )}
+
+            {/* RESPONSE SECTION */}
+            <div className="pt-4 border-t border-border-subtle mt-2 space-y-3">
+              <div className="flex items-center gap-2 text-text-muted text-xs font-bold uppercase tracking-wider">
+                <MessageSquare className="w-3 h-3" />
+                Respuesta Rápida
+              </div>
+
+              {!responseSent ? (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      "Ya bajo",
+                      "Dame 5 minutos",
+                      "Enseguida estoy",
+                      "Vuelva luego",
+                    ].map((msg) => (
+                      <button
+                        key={msg}
+                        onClick={() => handleSendResponse(msg)}
+                        disabled={responding}
+                        className="px-3 py-2 bg-zinc-100 dark:bg-white/5 hover:bg-zinc-200 dark:hover:bg-white/10 rounded-lg text-xs font-medium text-text-main transition-colors border border-transparent hover:border-border-subtle"
+                      >
+                        {msg}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Mensaje personalizado..."
+                      value={customResponse}
+                      onChange={(e) => setCustomResponse(e.target.value)}
+                      className="flex-1 bg-zinc-50 dark:bg-black/20 border border-border-subtle rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && customResponse.trim()) {
+                          handleSendResponse(customResponse.trim());
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() =>
+                        customResponse.trim() &&
+                        handleSendResponse(customResponse.trim())
+                      }
+                      disabled={responding || !customResponse.trim()}
+                      className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      &gt;
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
+                  <p className="text-emerald-500 text-sm font-medium">
+                    ¡Mensaje enviado al visitante!
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* REJECT BUTTON */}
             <div className="pt-2 border-t border-border-subtle mt-4">

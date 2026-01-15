@@ -41,12 +41,12 @@ export async function checkCallStatus(logId: string) {
     try {
         const log = await db.query.accessLogs.findFirst({
             where: eq(accessLogs.id, logId),
-            columns: { status: true }
+            columns: { status: true, responseMessage: true }
         });
 
         if (!log) return { success: false, status: null };
 
-        return { success: true, status: log.status };
+        return { success: true, status: log.status, responseMessage: log.responseMessage };
     } catch (error) {
         console.error("Error checking call status:", error);
         return { success: false, status: null };

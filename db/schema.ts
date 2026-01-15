@@ -64,6 +64,7 @@ export const accessLogs = pgTable('access_logs', {
     unitId: uuid('unit_id').references(() => units.id),
     visitorPhotoUrl: text('visitor_photo_url'),
     message: text('message'), // Fallback if no photo
+    responseMessage: text('response_message'), // Message from resident to visitor
     status: text('status').default('ringing'), // 'ringing', 'opened', 'missed'
     openedByUserId: text('opened_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow(),

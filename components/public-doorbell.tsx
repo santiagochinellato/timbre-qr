@@ -30,7 +30,8 @@ type ViewState =
   | "action_mode"
   | "calling"
   | "success"
-  | "no_answer";
+  | "no_answer"
+  | "response_received";
 type ActionMode = "photo" | "message";
 
 interface Unit {
@@ -71,6 +72,7 @@ export default function PublicDoorbell({
   const [textMessage, setTextMessage] = useState("");
   const [cameraError, setCameraError] = useState(false);
   const [currentLogId, setCurrentLogId] = useState<string | null>(null);
+  const [responseMessage, setResponseMessage] = useState<string | null>(null);
 
   // 1. Cargar Unidades
   useEffect(() => {
@@ -97,21 +99,26 @@ export default function PublicDoorbell({
       interval = setInterval(async () => {
         try {
           const result = await checkCallStatus(currentLogId);
-          if (result.success && result.status === "opened") {
-            setView("success");
-          } else if (result.success && result.status === "rejected") {
-            // Opcional: manejar rechazo explícito
-            setView("no_answer");
+          if (result.success) {
+            if (result.status === "opened") {
+              setView("success");
+            } else if (result.status === "rejected") {
+              setView("no_answer");
+            } else if (result.responseMessage) {
+              // New Message Received
+              setResponseMessage(result.responseMessage);
+              setView("response_received");
+            }
           }
         } catch (error) {
           console.error("Error polling status:", error);
         }
       }, 2000);
 
-      // Timeout de 45 segundos (si nadie responde)
+      // Timeout de 60 segundos (si nadie responde ni manda mensaje)
       timeout = setTimeout(() => {
         setView("no_answer");
-      }, 45000);
+      }, 60000);
     }
 
     return () => {
@@ -120,7 +127,6 @@ export default function PublicDoorbell({
     };
   }, [view, currentLogId]);
 
-  // 2. Manejo de Permisos
   // 2. Manejo de Permisos (Reales)
   const requestPermissions = async () => {
     try {
@@ -616,6 +622,86 @@ export default function PublicDoorbell({
                 </p>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* === VISTA 6: RESPUESTA RECIBIDA === */}
+        {view === "response_received" && (
+          <motion.div
+            key="response_received"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950 px-6 text-center"
+          >
+            <div className="w-24 h-24 bg-cyan-900/30 rounded-full flex items-center justify-center mb-6 border border-cyan-500/30 animate-pulse">
+              <MessageSquare className="w-10 h-10 text-cyan-400" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-400 mb-2 uppercase tracking-wide">
+              Mensaje del Residente
+            </h2>
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500" />
+              <p className="text-white text-2xl font-serif italic leading-relaxed">
+                "{responseMessage}"
+              </p>
+            </div>
+
+            <p className="text-zinc-500 mt-8 text-sm max-w-xs">
+              Por favor espere o siga las instrucciones.
+            </p>
+
+            <Button
+              onClick={() => {
+                setView("directory");
+                setSelectedUnit(null);
+                setImgSrc(null);
+                setResponseMessage(null);
+              }}
+              variant="outline"
+              className="mt-8 border-zinc-700 text-zinc-300 hover:bg-zinc-800 w-full max-w-xs h-12"
+            >
+              Volver al Inicio
+            </Button>
+          </motion.div>
+        )}
+
+        {/* === VISTA 6: RESPUESTA RECIBIDA === */}
+        {view === "response_received" && (
+          <motion.div
+            key="response_received"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950 px-6 text-center"
+          >
+            <div className="w-24 h-24 bg-cyan-900/30 rounded-full flex items-center justify-center mb-6 border border-cyan-500/30 animate-pulse">
+              <MessageSquare className="w-10 h-10 text-cyan-400" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-400 mb-2 uppercase tracking-wide">
+              Mensaje del Residente
+            </h2>
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl max-w-sm w-full shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500" />
+              <p className="text-white text-2xl font-serif italic leading-relaxed">
+                &quot;{responseMessage}&quot;
+              </p>
+            </div>
+
+            <p className="text-zinc-500 mt-8 text-sm max-w-xs">
+              Por favor espere o siga las instrucciones.
+            </p>
+
+            <Button
+              onClick={() => {
+                setView("directory");
+                setSelectedUnit(null);
+                setImgSrc(null);
+                setResponseMessage(null);
+              }}
+              variant="outline"
+              className="mt-8 border-zinc-700 text-zinc-300 hover:bg-zinc-800 w-full max-w-xs h-12"
+            >
+              Volver al Inicio
+            </Button>
           </motion.div>
         )}
 
