@@ -148,17 +148,18 @@ export default async function DashboardPage() {
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/90 z-10" />
 
-                {/* Bg Image Placeholder */}
+                {/* Bg Image Logic based on Name or Camera */}
                 <div className="absolute inset-0 z-0  dark:bg-zinc-600 bg-zinc-400">
                   {(() => {
+                    // Placeholder logic - ideally we'd have a building image field
                     let bgImage =
                       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
                     const name = bldg.buildingName || "";
-                    if (name.includes("Demo Center"))
+
+                    if (name.includes("Cauquén") || name.includes("Cauquen"))
                       bgImage = "/edificio1.jpg";
                     if (name.includes("Cabañas")) bgImage = "/edificio2.jpg";
-                    if (name.includes("Las Victorias"))
-                      bgImage = "/phPhoto.jpeg";
+                    if (name.includes("Victorias")) bgImage = "/phPhoto.jpeg";
 
                     return (
                       <div

@@ -70,7 +70,7 @@ export default async function PropertiesPage() {
                 {(() => {
                   let bgImage =
                     "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop";
-                  if (building.name.includes("Demo Center"))
+                  if (building.name.includes("Complejo Cauquen"))
                     bgImage = "/edificio1.jpg";
                   if (building.name.includes("Cabañas"))
                     bgImage = "/edificio2.jpg";

@@ -19,6 +19,7 @@ interface DoorCardProps {
   initialLog: LogType | undefined | null;
   unitMqttTopic: string | null;
   buildingMqttTopic: string | null;
+  cameraUrl?: string | null;
 }
 
 export function DoorCard({
@@ -26,6 +27,7 @@ export function DoorCard({
   initialLog,
   unitMqttTopic,
   buildingMqttTopic,
+  cameraUrl,
 }: DoorCardProps) {
   const router = useRouter();
   const [activeRing, setActiveRing] = useState<LogType | null | undefined>(
@@ -112,7 +114,17 @@ export function DoorCard({
         {/* Ringing Visual */}
         {activeRing ? (
           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
-            <CameraFeed className="w-full h-full" />
+            {cameraUrl ? (
+              /* Fixed Camera Feed (e.g. Totem or PH) */
+              <img
+                src={cameraUrl}
+                className="w-full h-full object-cover"
+                alt="Live Feed"
+              />
+            ) : (
+              /* Standard WebRTC/Visitor Feed */
+              <CameraFeed className="w-full h-full" />
+            )}
 
             {/* Visual Softening Overlay */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />

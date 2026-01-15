@@ -30,6 +30,7 @@ export default async function PropertyDetailPage({
       buildingId: units.buildingId,
       buildingName: buildings.name,
       buildingMqttTopic: buildings.mqttTopic,
+      cameraUrl: buildings.cameraUrl,
     })
     .from(units)
     .innerJoin(buildings, eq(units.buildingId, buildings.id))
@@ -129,6 +130,7 @@ export default async function PropertyDetailPage({
         initialLog={activeRing}
         unitMqttTopic={unit.unitMqttTopic}
         buildingMqttTopic={unit.buildingMqttTopic}
+        cameraUrl={unit.cameraUrl}
       />
 
       {/* Recent Visitor Gallery */}
