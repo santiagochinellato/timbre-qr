@@ -103,7 +103,7 @@ async function seed() {
       slug: "demo-cauquen",
       mqttTopic: "cauquen/gate",
       // Live feed URL (e.g., public webcam or placeholder)
-      cameraUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop", 
+      cameraUrl: "https://youtube.com/live/6-cDe1uUTqc?feature=share", 
       enableVisitorCamera: false, // TOTEM MODE: No visitor selfie
   }).returning();
 
@@ -124,7 +124,7 @@ async function seed() {
       name: "PH Las Victorias",
       slug: "demo-ph",
       mqttTopic: "ph/gate",
-      cameraUrl: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2070&auto=format&fit=crop", // Private cam placeholder
+      cameraUrl: "https://youtube.com/live/6-cDe1uUTqc?feature=share",
   }).returning();
 
   // Create 1 Unit

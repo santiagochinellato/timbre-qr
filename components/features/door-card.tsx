@@ -138,11 +138,7 @@ export function DoorCard({
           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
             {viewMode === "camera" && cameraUrl ? (
               /* Fixed Camera Feed (e.g. Totem or PH) */
-              <img
-                src={cameraUrl}
-                className="w-full h-full object-cover"
-                alt="Live Feed"
-              />
+              <CameraFeed url={cameraUrl} className="w-full h-full" />
             ) : viewMode === "photo" && activeRing?.visitorPhotoUrl ? (
               /* Visitor Photo (Snapshot) */
               <img
