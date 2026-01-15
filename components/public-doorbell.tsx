@@ -94,7 +94,10 @@ export default function PublicDoorbell({
     let interval: NodeJS.Timeout;
     let timeout: NodeJS.Timeout;
 
-    if (view === "calling" && currentLogId) {
+    const isPolling =
+      (view === "calling" || view === "response_received") && currentLogId;
+
+    if (isPolling) {
       // Polling cada 2 segundos
       interval = setInterval(async () => {
         try {
