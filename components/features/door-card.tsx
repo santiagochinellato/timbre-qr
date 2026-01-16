@@ -30,6 +30,9 @@ export function DoorCard({
   buildingMqttTopic,
   cameraUrl,
 }: DoorCardProps) {
+  // Fallback to env var if database URL is missing
+  const effectiveCameraUrl = cameraUrl || process.env.NEXT_PUBLIC_STREAM_URL;
+
   const router = useRouter();
   const [activeRing, setActiveRing] = useState<LogType | null | undefined>(
     initialLog?.status === "ringing" ? initialLog : null
@@ -52,10 +55,10 @@ export function DoorCard({
   useEffect(() => {
     if (activeRing?.visitorPhotoUrl) {
       setViewMode("photo");
-    } else if (cameraUrl) {
+    } else if (effectiveCameraUrl) {
       setViewMode("camera");
     }
-  }, [activeRing, cameraUrl]);
+  }, [activeRing, effectiveCameraUrl]);
 
   // Polling Effect
   useEffect(() => {
@@ -133,9 +136,9 @@ export function DoorCard({
         {/* Ringing Visual */}
         {activeRing ? (
           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
-            {viewMode === "camera" && cameraUrl ? (
+            {viewMode === "camera" && effectiveCameraUrl ? (
               /* Fixed Camera Feed (Legacy/Railway) */
-              <CameraFeed url={cameraUrl} className="w-full h-full" />
+              <CameraFeed url={effectiveCameraUrl} className="w-full h-full" />
             ) : viewMode === "photo" && activeRing?.visitorPhotoUrl ? (
               /* Visitor Photo (Snapshot) */
               <img
@@ -151,9 +154,8 @@ export function DoorCard({
                 </div>
               </div>
             )}
-
             {/* Toggle Button for Hybrid (PH) Scenarios - NOW OPENS LIVE MODAL */}
-            {cameraUrl && (
+            {effectiveCameraUrl && (
               <div className="absolute top-2 right-2 z-20">
                 <button
                   onClick={() => setIsLiveModalOpen(true)}
@@ -163,10 +165,8 @@ export function DoorCard({
                 </button>
               </div>
             )}
-
             {/* Visual Softening Overlay */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
-
             {/* Visitor Message Overlay */}
             {activeRing.message && (
               <div className="absolute bottom-4 left-4 right-4 animate-in slide-in-from-bottom-2 fade-in duration-500">
