@@ -136,7 +136,8 @@ function startFfmpegStream() {
         activeStream = null;
         // Auto-restart if clients exist
         if (wss.clients.size > 0) {
-            setTimeout(startFfmpegStream, 2000);
+            console.log("Waiting 15s before reconnecting to avoid lockout...");
+            setTimeout(startFfmpegStream, 15000);
         }
     });
 }
