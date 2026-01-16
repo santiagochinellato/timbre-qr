@@ -16,8 +16,9 @@ RUN npm install --production
 COPY index.js .
 
 # 5. Environment
+# Railway provides PORT via env var
 ENV PORT=8080
 EXPOSE 8080
 
 # 6. Start command
-CMD ["npm", "start"]
+CMD ["node", "index.js"]

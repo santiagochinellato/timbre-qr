@@ -7,8 +7,10 @@ const http = require('http');
 // --- CONFIG ---
 const PORT = process.env.PORT || 8080;
 const SECRET_KEY = "timbre_secret_123"; 
-// Confirmed working URL - Dahua Substream
-const RTSP_URL = process.env.RTSP_STREAM_URL || "rtsp://admin:Univer$0@186.0.212.50:9081/cam/realmonitor?channel=1&subtype=1";
+
+// Hardcoded for stability on Railway
+// Using the Verified Dahua Substream Path
+const RTSP_URL = "rtsp://admin:Univers0@186.0.212.50:9081/cam/realmonitor?channel=1&subtype=1";
 
 // --- EXPRESS APP (SNAPSHOTS) ---
 const app = express();

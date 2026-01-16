@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Unlock, X, MessageSquare, Camera } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
-// import { CameraFeed } from "./camera-feed"; // Removed legacy
-import { ServerlessCameraView } from "@/components/features/serverless-camera-view";
+import { CameraFeed } from "./camera-feed";
+// import { ServerlessCameraView } from "@/components/features/serverless-camera-view";
 import { LiveCameraModal } from "@/components/features/live-camera-modal"; // Import
 import { sendResponse } from "@/app/actions/send-response";
 import { checkUnitStatus } from "@/app/actions/check-status";
@@ -134,11 +134,8 @@ export function DoorCard({
         {activeRing ? (
           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
             {viewMode === "camera" && cameraUrl ? (
-              /* Fixed Camera Feed (Serverless) */
-              <ServerlessCameraView
-                className="w-full h-full"
-                refreshInterval={500}
-              />
+              /* Fixed Camera Feed (Legacy/Railway) */
+              <CameraFeed url={cameraUrl} className="w-full h-full" />
             ) : viewMode === "photo" && activeRing?.visitorPhotoUrl ? (
               /* Visitor Photo (Snapshot) */
               <img
