@@ -5,15 +5,17 @@ const WebSocket = require('ws');
 const http = require('http');
 
 // --- CONFIG ---
-const API_PORT = 8080;
-const WS_PORT = 9999;
+const PORT = process.env.PORT || 8080;
 const SECRET_KEY = "timbre_secret_123"; 
-// Confirmed working URL
+// Confirmed working URL - Dahua Substream
 const RTSP_URL = process.env.RTSP_STREAM_URL || "rtsp://admin:Univer$0@186.0.212.50:9081/cam/realmonitor?channel=1&subtype=1";
 
 // --- EXPRESS APP (SNAPSHOTS) ---
 const app = express();
 app.use(cors());
+
+// --- HTTP SERVER ---
+const server = http.createServer(app);
 
 function captureSnapshot(url) {
     if (process.env.MOCK_CAMERA === "true") {
@@ -75,16 +77,11 @@ app.get('/snapshot', async (req, res) => {
     }
 });
 
-app.listen(API_PORT, () => {
-    console.log(`📸 Snapshot API running on port ${API_PORT}`);
-});
-
-
-// --- CUSTOM WEBSOCKET STREAM SERVER ---
+// --- WEBSOCKET SERVER (ATTACHED TO SAME HTTP SERVER) ---
 const maskedUrl = RTSP_URL.replace(/:([^:@]+)@/, ":****@");
-console.log(`🚀 Starting Custom Stream Server on port ${WS_PORT} for ${maskedUrl}`);
+console.log(`🚀 Starting Unified Server on port ${PORT} for ${maskedUrl}`);
 
-const wss = new WebSocket.Server({ port: WS_PORT });
+const wss = new WebSocket.Server({ server });
 
 let activeStream = null;
 
@@ -141,4 +138,9 @@ function startFfmpegStream() {
         }
     });
 }
+
+// Start the Shared Server
+server.listen(PORT, () => {
+    console.log(`✅ Server (API + WS) listening on port ${PORT}`);
+});
 

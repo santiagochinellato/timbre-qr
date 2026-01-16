@@ -1,6 +1,6 @@
-FROM node:20-slim
+FROM node:18-bullseye-slim
 
-# 1. Install FFmpeg at OS level (Stable & supports RTSP libraries)
+# 1. Install FFmpeg
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
     rm -rf /var/lib/apt/lists/*
@@ -15,8 +15,9 @@ RUN npm install --production
 # 4. Source code
 COPY index.js .
 
-# 5. Dynamic Port (Railway/Fly support)
+# 5. Environment
+ENV PORT=8080
 EXPOSE 8080
 
 # 6. Start command
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
