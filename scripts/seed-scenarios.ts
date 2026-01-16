@@ -103,7 +103,7 @@ async function seed() {
       slug: "demo-cauquen",
       mqttTopic: "cauquen/gate",
       // Live feed URL (e.g., public webcam or placeholder)
-      cameraUrl: "https://youtube.com/live/6-cDe1uUTqc?feature=share", 
+      cameraUrl: "http://localhost:8080/snapshot", // Local snapshot for preview 
       enableVisitorCamera: false, // TOTEM MODE: No visitor selfie
   }).returning();
 

@@ -30,6 +30,7 @@ export default async function DashboardPage() {
       unitLabel: units.label,
       buildingName: buildings.name,
       buildingSlug: buildings.slug,
+      cameraUrl: buildings.cameraUrl, // Added field
     })
     .from(userUnits)
     .innerJoin(units, eq(userUnits.unitId, units.id))
@@ -178,8 +179,8 @@ export default async function DashboardPage() {
                         {bldg.buildingName}
                       </span>
                     </div>
-                    {/* Camera Button Component */}
-                    <CameraViewerButton />
+                    {/* Camera Button Component - Only if URL exists */}
+                    {bldg.cameraUrl ? <CameraViewerButton /> : null}
                   </div>
 
                   <div>
