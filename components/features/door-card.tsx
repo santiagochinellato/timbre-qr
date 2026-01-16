@@ -33,6 +33,12 @@ export function DoorCard({
   // Fallback to env var if database URL is missing
   const effectiveCameraUrl = cameraUrl || process.env.NEXT_PUBLIC_STREAM_URL;
 
+  if (typeof window !== "undefined") {
+    console.log("[DoorCard] Database URL:", cameraUrl);
+    console.log("[DoorCard] Env Var URL:", process.env.NEXT_PUBLIC_STREAM_URL);
+    console.log("[DoorCard] Effective URL:", effectiveCameraUrl);
+  }
+
   const router = useRouter();
   const [activeRing, setActiveRing] = useState<LogType | null | undefined>(
     initialLog?.status === "ringing" ? initialLog : null
