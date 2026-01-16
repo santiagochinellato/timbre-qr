@@ -327,7 +327,7 @@ export function DoorCard({
       <LiveCameraModal
         isOpen={isLiveModalOpen}
         onClose={() => setIsLiveModalOpen(false)}
-        streamUrl="ws://localhost:9999"
+        streamUrl={effectiveCameraUrl || ""}
       />
     </div>
   );
