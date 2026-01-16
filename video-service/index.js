@@ -4,118 +4,71 @@ const { spawn } = require('child_process');
 const WebSocket = require('ws'); 
 const http = require('http');
 
-// --- CONFIG ---
+// --- CONFIGURACIÓN CRÍTICA ---
 const PORT = process.env.PORT || 8080;
-const SECRET_KEY = "timbre_secret_123"; 
 
-// Hardcoded for stability on Railway
-// Using the Verified Dahua Substream Path
-const RTSP_URL = "rtsp://admin:Univers0@186.0.212.50:9081/cam/realmonitor?channel=1&subtype=1";
+// Credenciales y Endpoint actualizados con tu IP Pública
+// NOTA: Si no funciona la ruta '/live/ch0', prueba con '/cam/realmonitor?channel=1&subtype=1' (Dahua) o '/stream1'
+const CAM_CONFIG = {
+    ip: "191.80.155.203",
+    port: "8080",
+    user: "gnet",
+    pass: "NGet0126",
+    path: "/live/ch0" // 👈 CAMBIAR AQUÍ si la cámara usa otra ruta interna
+};
 
-// --- EXPRESS APP (SNAPSHOTS) ---
+const RTSP_URL = `rtsp://${CAM_CONFIG.user}:${CAM_CONFIG.pass}@${CAM_CONFIG.ip}:${CAM_CONFIG.port}${CAM_CONFIG.path}`;
+
+// --- EXPRESS APP ---
 const app = express();
 app.use(cors());
+
+// Endpoint de salud para Railway
+app.get('/', (req, res) => res.send('Video Relay Service Online 🟢'));
 
 // --- HTTP SERVER ---
 const server = http.createServer(app);
 
-function captureSnapshot(url) {
-    if (process.env.MOCK_CAMERA === "true") {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve(Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=\n", "base64"));
-            }, 500);
-        });
-    }
-
-    return new Promise((resolve, reject) => {
-        const ffmpeg = spawn('ffmpeg', [
-            '-y',
-            '-rtsp_transport', 'tcp',
-            '-i', url,
-            '-f', 'image2',
-            '-vframes', '1',
-            '-q:v', '5',
-            'pipe:1'
-        ]);
-
-        let buffers = [];
-        ffmpeg.stdout.on('data', (chunk) => buffers.push(chunk));
-        ffmpeg.on('close', (code) => {
-            if (code === 0 && buffers.length > 0) resolve(Buffer.concat(buffers));
-            else reject(new Error(`FFmpeg exited with code ${code}`));
-        });
-        ffmpeg.on('error', (err) => reject(err));
-        setTimeout(() => {
-            if (ffmpeg.exitCode === null) {
-                ffmpeg.kill('SIGKILL');
-                reject(new Error('FFmpeg Timeout'));
-            }
-        }, 8000);
-    });
-}
-
-// Simple cache
-const cache = new Map();
-app.get('/snapshot', async (req, res) => {
-    const rtspUrl = req.query.url || RTSP_URL;
-    
-    // Check Cache
-    const now = Date.now();
-    const entry = cache.get(rtspUrl);
-    if (entry && (now - entry.timestamp < 2000)) {
-        res.set('Content-Type', 'image/jpeg');
-        return res.send(entry.buffer);
-    }
-
-    try {
-        const buffer = await captureSnapshot(rtspUrl);
-        cache.set(rtspUrl, { timestamp: now, buffer });
-        res.set('Content-Type', 'image/jpeg');
-        res.send(buffer);
-    } catch (err) {
-        console.error("Snapshot error:", err.message);
-        res.status(502).send("Camera Unreachable");
-    }
-});
-
-// --- WEBSOCKET SERVER (ATTACHED TO SAME HTTP SERVER) ---
-const maskedUrl = RTSP_URL.replace(/:([^:@]+)@/, ":****@");
-console.log(`🚀 Starting Unified Server on port ${PORT} for ${maskedUrl}`);
-
+// --- WEBSOCKET SERVER ---
 const wss = new WebSocket.Server({ server });
 
 let activeStream = null;
 
 wss.on('connection', (ws, req) => {
-    console.log(`[WS] New client connected from ${req.socket.remoteAddress}`);
+    console.log(`[CLIENT] Conexión nueva desde: ${req.socket.remoteAddress}`);
 
+    // Enviar cabecera JSMpeg (magic bytes) si es necesario, o iniciar stream
     if (!activeStream) {
         startFfmpegStream();
     }
+    
+    ws.on('close', () => {
+        console.log('[CLIENT] Desconectado');
+    });
 });
 
 function startFfmpegStream() {
-    console.log("[FFMPEG] Spawning process...");
+    if (activeStream) return;
+
+    console.log(`[FFMPEG] Iniciando stream hacia: ${CAM_CONFIG.ip}...`);
     
-    // Exact arguments that worked in manual verification
+    // Argumentos optimizados para JSMpeg (MPEG1 Video / MP2 Audio - o sin audio)
     const args = [
-        '-rtsp_transport', 'tcp',
+        '-rtsp_transport', 'tcp', // Forzar TCP para evitar paquetes corruptos por internet
         '-i', RTSP_URL,
-        '-f', 'mpegts',
-        '-codec:v', 'mpeg1video',
-        '-r', '25',
-        '-s', '1280x720',
-        '-b:v', '2000k',
-        '-bf', '0',
-        '-an', // No Audio
-        '-'
+        '-f', 'mpegts',           // Formato contenedor TS
+        '-codec:v', 'mpeg1video', // Codec obligatorio para JSMpeg
+        '-r', '25',               // FPS
+        '-s', '640x360',          // ⚠️ Reducimos resolución para asegurar fluidez en 4G/móviles
+        '-b:v', '800k',           // Bitrate controlado
+        '-bf', '0',               // Sin B-frames para latencia mínima
+        '-an',                    // Sin audio (quitar si necesitas audio mp2)
+        '-'                       // Salida a STDOUT
     ];
 
     activeStream = spawn('ffmpeg', args);
 
     activeStream.stdout.on('data', (data) => {
-        // Broadcast to all connected clients
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(data);
@@ -125,25 +78,26 @@ function startFfmpegStream() {
 
     activeStream.stderr.on('data', (data) => {
         const msg = data.toString();
-        // Log startup messages or errors, ignore frequent frame stats to keep logs clean
-        if (!msg.includes('frame=')) {
-             console.error(`[FFMPEG Log] ${msg.trim()}`);
+        // Filtrar logs ruidosos, mostrar solo errores o inicios
+        if (msg.includes('Error') || msg.includes('Input #0')) { 
+            console.log(`[FFMPEG LOG] ${msg.trim()}`);
         }
     });
 
     activeStream.on('close', (code) => {
-        console.log(`[FFMPEG] Process exited with code ${code}`);
+        console.log(`[FFMPEG] Proceso terminó (Código: ${code})`);
         activeStream = null;
-        // Auto-restart if clients exist
+        
+        // Reintento automático si hay clientes conectados
         if (wss.clients.size > 0) {
-            console.log("Waiting 15s before reconnecting to avoid lockout...");
-            setTimeout(startFfmpegStream, 15000);
+            console.log("🔄 Reintentando conexión en 5 segundos...");
+            setTimeout(startFfmpegStream, 5000); // 5 sec retry logic as per user code, but I know 15 is safer. Sticking to user request first.
         }
     });
 }
 
-// Start the Shared Server
 server.listen(PORT, () => {
-    console.log(`✅ Server (API + WS) listening on port ${PORT}`);
+    console.log(`✅ Servidor de Video listo en puerto ${PORT}`);
+    console.log(`📡 URL Websocket (aprox): ws://<TU-URL-RAILWAY>/`);
 });
 
