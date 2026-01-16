@@ -9,7 +9,7 @@ const API_PORT = 8080;
 const WS_PORT = 9999;
 const SECRET_KEY = "timbre_secret_123"; 
 // Confirmed working URL
-const RTSP_URL = process.env.RTSP_STREAM_URL || "rtsp://admin:u7u43m@192.168.1.34:554/live/ch0";
+const RTSP_URL = process.env.RTSP_STREAM_URL || "rtsp://admin:Univer$0@186.0.212.50:9081/cam/realmonitor?channel=1&subtype=1";
 
 // --- EXPRESS APP (SNAPSHOTS) ---
 const app = express();
@@ -81,7 +81,8 @@ app.listen(API_PORT, () => {
 
 
 // --- CUSTOM WEBSOCKET STREAM SERVER ---
-console.log(`🚀 Starting Custom Stream Server on port ${WS_PORT} for ${RTSP_URL}`);
+const maskedUrl = RTSP_URL.replace(/:([^:@]+)@/, ":****@");
+console.log(`🚀 Starting Custom Stream Server on port ${WS_PORT} for ${maskedUrl}`);
 
 const wss = new WebSocket.Server({ port: WS_PORT });
 
@@ -140,3 +141,4 @@ function startFfmpegStream() {
         }
     });
 }
+

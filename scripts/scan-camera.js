@@ -1,16 +1,20 @@
 const { spawn } = require('child_process');
 
-const HOST = '192.168.1.34';
-const PORT = 554;
-const USER = 'thaf';
-const PASS = 'u7u43m'; // confirmed by user
+const HOST = '186.0.212.50';
+const PORT = 9081;
+const USER = 'admin';
+const PASS = 'Univer$0'; 
+const PASS_ENC = 'Univer%240';
+const PASS_TYPO_O = 'Univer$o';
 
 const CANDIDATES = [
-    { name: "User Provided", url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/live/ch0` },
-    { name: "Admin User",    url: `rtsp://admin:${PASS}@${HOST}:${PORT}/live/ch0` },
-    { name: "No Auth",       url: `rtsp://${HOST}:${PORT}/live/ch0` },
-    { name: "Substream",     url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/live/ch1` },
-    { name: "V380 Default",  url: `rtsp://${HOST}:${PORT}/live/ch0` } // same as no auth but labeling
+    { name: "Dahua Main",          url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/cam/realmonitor?channel=1&subtype=0` },
+    { name: "Dahua Sub",           url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/cam/realmonitor?channel=1&subtype=1` },
+    { name: "Hikvision Main",      url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/Streaming/Channels/101` },
+    { name: "Hikvision Sub",       url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/Streaming/Channels/102` },
+    { name: "Tapoc C200",          url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/stream1` },
+    { name: "Generic Live",        url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/live` },
+    { name: "Generic Media",       url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/media/video1` },
 ];
 
 async function testUrl(candidate) {

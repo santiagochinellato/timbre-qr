@@ -2,9 +2,9 @@ const net = require('net');
 const { spawn } = require('child_process');
 
 const CAMERA_CONFIG = {
-    host: '192.168.1.34',
-    port: 554,
-    rtspUrl: 'rtsp://gnet:GNet0126@192.168.1.34:554/live/ch0'
+    host: '186.0.212.50',
+    port: 9081,
+    rtspUrl: 'rtsp://admin:Univer$0@186.0.212.50:9081/profile1'
 };
 
 console.log(`Testing connection to Camera at ${CAMERA_CONFIG.host}:${CAMERA_CONFIG.port}...`);
