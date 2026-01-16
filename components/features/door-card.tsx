@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
 import { CameraFeed } from "./camera-feed";
+import { LiveCameraModal } from "@/components/features/live-camera-modal"; // Import
 import { sendResponse } from "@/app/actions/send-response";
 import { checkUnitStatus } from "@/app/actions/check-status";
 import { rejectCall } from "@/app/actions/reject-call";
@@ -43,6 +44,8 @@ export function DoorCard({
   const [responding, setResponding] = useState(false);
   const [customResponse, setCustomResponse] = useState("");
   const [responseSent, setResponseSent] = useState(false);
+  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false); // New State
+
   // View Mode: 'camera' | 'photo'. Default depends on config.
   // If we have cameraUrl AND visitorPhoto, default to photo (to see who ringed), but allow toggle.
   // If only cameraUrl, default camera.
@@ -155,26 +158,14 @@ export function DoorCard({
               </div>
             )}
 
-            {/* Toggle Button for Hybrid (PH) Scenarios */}
-            {cameraUrl && activeRing?.visitorPhotoUrl && (
+            {/* Toggle Button for Hybrid (PH) Scenarios - NOW OPENS LIVE MODAL */}
+            {cameraUrl && (
               <div className="absolute top-2 right-2 z-20">
                 <button
-                  onClick={() =>
-                    setViewMode((prev) =>
-                      prev === "photo" ? "camera" : "photo"
-                    )
-                  }
+                  onClick={() => setIsLiveModalOpen(true)}
                   className="bg-black/50 hover:bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold border border-white/20 flex items-center gap-2 transition-colors"
                 >
-                  {viewMode === "photo" ? (
-                    <>
-                      <Camera className="w-3 h-3" /> Ver Cámara en Vivo
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="w-3 h-3" /> Ver Foto Visitante
-                    </>
-                  )}
+                  <Camera className="w-3 h-3" /> Ver Cámara en Vivo
                 </button>
               </div>
             )}
@@ -338,6 +329,12 @@ export function DoorCard({
           </div>
         )}
       </div>
+
+      <LiveCameraModal
+        isOpen={isLiveModalOpen}
+        onClose={() => setIsLiveModalOpen(false)}
+        streamUrl="ws://localhost:9999"
+      />
     </div>
   );
 }

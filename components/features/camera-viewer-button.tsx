@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { Camera, X } from "lucide-react";
-import { CameraFeed } from "./camera-feed";
 import { createPortal } from "react-dom";
+import { LiveVideoPlayer } from "./live-video-player";
 
 export function CameraViewerButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [emergencyConfirm, setEmergencyConfirm] = useState(false);
 
   const handleCapture = () => {
-    // Basic capture: open current snapshot in new tab or download
-    // Since we don't have direct access to the stream blob here easily without refactoring CameraFeed,
-    // we'll trigger a fresh download of the snapshot API.
+    // Legacy snapshot capture
+    // Note: This grabs a frame from the API (port 8080), not the websocket canvas directly
+    // This is safer for cross-browser compat if we want a high-quality JPEG
     const link = document.createElement("a");
     link.href = `/api/camera/snapshot?t=${Date.now()}&download=true`;
     link.download = `captura-${new Date().toISOString()}.jpg`;
@@ -29,7 +29,6 @@ export function CameraViewerButton() {
     }
 
     // Trigger Emergency Action
-    // TODO: Connect to actual server action
     alert("¡ALERTA DE EMERGENCIA ENVIADA!");
     setEmergencyConfirm(false);
     setIsOpen(false);
@@ -73,9 +72,12 @@ export function CameraViewerButton() {
                 </button>
               </div>
 
-              {/* Feed */}
+              {/* Feed - NOW USING LIVE VIDEO PLAYER */}
               <div className="aspect-video bg-black relative flex-shrink-0">
-                <CameraFeed className="w-full h-full" refreshInterval={200} />
+                <LiveVideoPlayer
+                  streamUrl="ws://localhost:9999"
+                  className="w-full h-full"
+                />
               </div>
 
               {/* Action Buttons */}

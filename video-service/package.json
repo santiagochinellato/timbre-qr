@@ -7,6 +7,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "cors": "^2.8.5",
+    "express": "^4.22.1",
+    "node-rtsp-stream": "^0.0.9",
+    "ws": "^8.19.0"
   }
 }
