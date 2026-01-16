@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    serverComponentsExternalPackages: ["fluent-ffmpeg", "ffmpeg-static"],
   },
   async headers() {
     return [
