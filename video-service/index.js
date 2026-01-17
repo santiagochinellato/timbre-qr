@@ -30,7 +30,9 @@ function startFfmpeg() {
     if (ffmpegProcess) return;
 
     console.log(`[FFMPEG] 🎬 Iniciando conversión de stream...`);
-    console.log(`[FFMPEG] Target: ${RTSP_URL.replace(/:[^:@]+@/, ':****@')}`); // Log seguro ocultando pass
+    // Mask password in logs
+    const safeUrl = RTSP_URL.replace(/:[^:@]+@/, ':****@');
+    console.log(`[FFMPEG] Target: ${safeUrl}`);
 
     const args = [
         '-rtsp_transport', 'tcp', // CRÍTICO: Usar TCP para evitar cortes por internet
@@ -47,19 +49,27 @@ function startFfmpeg() {
 
     ffmpegProcess = spawn('ffmpeg', args);
 
+    ffmpegProcess.on('error', (err) => {
+        console.error('[FFMPEG ERROR] Failed to spawn process:', err);
+    });
+
     ffmpegProcess.stdout.on('data', (data) => {
         // Broadcast a todos los clientes conectados
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(data);
+                try {
+                    client.send(data);
+                } catch (e) {
+                    console.error('[WS ERROR] Send failed:', e);
+                }
             }
         });
     });
 
     ffmpegProcess.stderr.on('data', (data) => {
-        // Solo mostramos logs importantes para no ensuciar la consola de Railway
         const msg = data.toString();
-        if (msg.includes('Error') || msg.includes('Input #0')) {
+        // Log all FFmpeg output to debug startup issues
+        if (process.env.DEBUG_FFMPEG || msg.includes('Error') || msg.includes('fail') || msg.includes('panic')) {
             console.log(`[FFMPEG LOG] ${msg.trim()}`);
         }
     });
