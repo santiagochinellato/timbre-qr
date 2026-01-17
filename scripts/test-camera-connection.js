@@ -3,8 +3,8 @@ const { spawn } = require('child_process');
 
 const CAMERA_CONFIG = {
     host: '186.0.212.50',
-    port: 9081,
-    rtspUrl: 'rtsp://admin:Univer$0@186.0.212.50:9081/profile1'
+    port: 2000,
+    rtspUrl: 'rtsp://admin:Univers0@186.0.212.50:2000/cam/realmonitor?channel=1&subtype=0'
 };
 
 console.log(`Testing connection to Camera at ${CAMERA_CONFIG.host}:${CAMERA_CONFIG.port}...`);

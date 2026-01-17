@@ -10,14 +10,14 @@ const PORT = process.env.PORT || 8080;
 // Credenciales y Endpoint actualizados con tu IP Pública
 // NOTA: Si no funciona la ruta '/live/ch0', prueba con '/cam/realmonitor?channel=1&subtype=1' (Dahua) o '/stream1'
 const CAM_CONFIG = {
-    ip: "191.80.155.203",
-    port: "8080",
-    user: "gnet",
-    pass: "NGet0126",
-    path: "/live/ch0" // 👈 CAMBIAR AQUÍ si la cámara usa otra ruta interna
+    ip: "186.0.212.50",
+    port: "2000",
+    user: "admin",
+    pass: "Univers0",
+    path: "/cam/realmonitor?channel=1&subtype=0" // 👈 CAMBIAR AQUÍ si la cámara usa otra ruta interna
 };
 
-const RTSP_URL = `rtsp://${CAM_CONFIG.user}:${CAM_CONFIG.pass}@${CAM_CONFIG.ip}:${CAM_CONFIG.port}${CAM_CONFIG.path}`;
+const RTSP_URL = process.env.RTSP_STREAM_URL || `rtsp://${CAM_CONFIG.user}:${CAM_CONFIG.pass}@${CAM_CONFIG.ip}:${CAM_CONFIG.port}${CAM_CONFIG.path}`;
 
 // --- EXPRESS APP ---
 const app = express();

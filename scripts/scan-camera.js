@@ -1,13 +1,14 @@
 const { spawn } = require('child_process');
 
 const HOST = '186.0.212.50';
-const PORT = 9081;
+const PORT = 2000;
 const USER = 'admin';
-const PASS = 'Univer$0'; 
-const PASS_ENC = 'Univer%240';
-const PASS_TYPO_O = 'Univer$o';
+const PASS = 'Univers0'; 
+const PASS_ENC = 'Univers0';
+const PASS_TYPO_O = 'Univers0';
 
 const CANDIDATES = [
+    { name: "Verified Link",       url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/cam/realmonitor?channel=1&subtype=0` },
     { name: "Dahua Main",          url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/cam/realmonitor?channel=1&subtype=0` },
     { name: "Dahua Sub",           url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/cam/realmonitor?channel=1&subtype=1` },
     { name: "Hikvision Main",      url: `rtsp://${USER}:${PASS}@${HOST}:${PORT}/Streaming/Channels/101` },
