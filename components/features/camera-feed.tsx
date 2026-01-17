@@ -2,103 +2,122 @@ import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 
 interface CameraFeedProps {
-  url?: string | null;
+  url?: string | null; // Aquí esperamos la URL WSS de Railway, NO la RTSP
   className?: string;
-  refreshInterval?: number;
 }
 
 declare global {
   interface Window {
-    JSMpeg: any;
+    JSMpeg: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 }
 
 export function CameraFeed({ url, className = "" }: CameraFeedProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
-  // Helper to extract YouTube ID
-  const getYouTubeId = (url: string) => {
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|live\/)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  };
-
-  const youtubeId = url ? getYouTubeId(url) : null;
+  // Detectar si es una URL de WebSocket (Railway)
   const isWs = url?.startsWith("ws://") || url?.startsWith("wss://");
+
+  useEffect(() => {
+    // Limpieza al desmontar o cambiar URL
+    return () => {
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (e) {
+          console.error("Error destroying player", e);
+        }
+        playerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isWs || !url || !isScriptLoaded || !canvasRef.current) return;
 
-    // Destroy previous instance
-    if (playerRef.current) {
-      playerRef.current.destroy();
-    }
-
-    try {
-      console.log("Initializing JSMpeg with URL:", url);
-      playerRef.current = new window.JSMpeg.Player(url, {
-        canvas: canvasRef.current,
-        autoplay: true,
-        audio: false, // Cameras usually send video only or unsupported audio
-      });
-    } catch (e) {
-      console.error("JSMpeg init error:", e);
-    }
-
-    return () => {
+    // Pequeño delay para asegurar que el canvas esté listo
+    const timer = setTimeout(() => {
       if (playerRef.current) {
         playerRef.current.destroy();
-        playerRef.current = null;
       }
-    };
+
+      try {
+        console.log("🎥 Iniciando JSMpeg con:", url);
+        playerRef.current = new window.JSMpeg.Player(url, {
+          canvas: canvasRef.current,
+          autoplay: true,
+          audio: false,
+          loop: true,
+          onStalled: () => console.log("⚠️ Stream estancado (buffering)"),
+          onSourceEstablished: () => {
+            console.log("✅ Conexión establecida con Railway");
+            setError(false);
+          },
+        });
+      } catch (e) {
+        console.error("❌ Error iniciando JSMpeg:", e);
+        setError(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [url, isWs, isScriptLoaded]);
 
   return (
     <div
-      className={`relative bg-black rounded-xl overflow-hidden ${className}`}
+      className={`relative bg-zinc-900 rounded-xl overflow-hidden shadow-inner ${className}`}
     >
-      {/* Load JSMpeg script if needed for WS streams */}
+      {/* Script necesario para decodificar MPEG1 en canvas */}
       <Script
         src="https://cdn.jsdelivr.net/gh/phoboslab/jsmpeg@master/jsmpeg.min.js"
         strategy="afterInteractive"
         onLoad={() => setIsScriptLoaded(true)}
       />
 
-      {youtubeId ? (
-        <iframe
-          width="100%"
-          height="100%"
-          src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0`}
-          title="Live Camera Feed"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          className="w-full h-full object-cover pointer-events-none"
-        />
-      ) : isWs ? (
-        /* JSMpeg Canvas for WebSocket Stream */
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full object-cover"
-          style={{ width: "100%", height: "100%" }}
-        />
-      ) : url ? (
-        <img src={url} alt="Live Feed" className="w-full h-full object-cover" />
+      {isWs ? (
+        <>
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full object-cover block"
+          />
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-xs">
+              Error de Conexión
+            </div>
+          )}
+        </>
       ) : (
-        <div className="w-full h-full bg-zinc-950 flex flex-col items-center justify-center text-zinc-500">
-          <span className="text-xs uppercase tracking-widest mb-2 font-medium">
-            Cámara no disponible
-          </span>
+        /* Fallback para imagen estática o placeholder */
+        <div className="w-full h-full flex items-center justify-center text-zinc-500">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {url ? (
+            <img
+              src={url}
+              alt="Camera feed"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            "Cámara Offline"
+          )}
         </div>
       )}
 
-      {/* Status Overlay */}
-      <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none z-10">
-        <div className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md bg-green-500/20 text-green-500 border border-green-500/30">
-          LIVE
+      {/* Indicador LIVE estilo Apple/Vercel */}
+      {isWs && (
+        <div className="absolute top-3 right-3 flex items-center gap-2 pointer-events-none z-10">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+          </span>
+          <span className="text-[10px] font-bold text-white/90 tracking-wider shadow-sm">
+            LIVE
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 }
