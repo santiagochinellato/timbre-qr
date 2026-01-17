@@ -30,19 +30,17 @@ export function DoorCard({
   buildingMqttTopic,
   cameraUrl,
 }: DoorCardProps) {
-  // Fallback to env var if database URL is missing OR if it's a localhost testing URL OR a raw RTSP url (browsers can't play it)
+  // Fallback to env var if database URL is missing OR if it's not a WebSocket URL (we want Live Video, not HTTP snapshots)
   const isInvalidDbUrl =
     !cameraUrl ||
-    cameraUrl.includes("localhost") ||
-    cameraUrl.includes("127.0.0.1") ||
-    cameraUrl.startsWith("rtsp://");
+    (!cameraUrl.startsWith("ws://") && !cameraUrl.startsWith("wss://"));
   const effectiveCameraUrl = !isInvalidDbUrl
     ? cameraUrl
     : process.env.NEXT_PUBLIC_CAMERA_WS_URL;
 
   if (typeof window !== "undefined") {
     console.log("[DoorCard] Database URL:", cameraUrl);
-    console.log("[DoorCard] Is Invalid/Stale:", isInvalidDbUrl);
+    console.log("[DoorCard] Is Invalid (Must be WS):", isInvalidDbUrl);
     console.log(
       "[DoorCard] Env Var URL:",
       process.env.NEXT_PUBLIC_CAMERA_WS_URL,

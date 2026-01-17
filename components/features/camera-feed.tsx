@@ -46,20 +46,35 @@ export function CameraFeed({ url, className = "" }: CameraFeedProps) {
       }
 
       try {
-        console.log("🎥 Iniciando JSMpeg con:", url);
+        console.log("🎥 [CameraFeed] Initializing JSMpeg Player");
+        console.log("🎥 [CameraFeed] URL:", url);
+        console.log("🎥 [CameraFeed] Canvas:", canvasRef.current);
+
         playerRef.current = new window.JSMpeg.Player(url, {
           canvas: canvasRef.current,
           autoplay: true,
           audio: false,
           loop: true,
-          onStalled: () => console.log("⚠️ Stream estancado (buffering)"),
+          onStalled: () =>
+            console.warn(
+              "⚠️ [CameraFeed] Stream stalled (low data/connection issue)",
+            ),
           onSourceEstablished: () => {
-            console.log("✅ Conexión establecida con Railway");
+            console.log("✅ [CameraFeed] Connection established to Server");
             setError(false);
+          },
+          onVideoDecode: () => {
+            // Log only first frame to avoid spam
+            if (!playerRef.current?.hasDecodedFirstFrame) {
+              console.log(
+                "🎬 [CameraFeed] First Frame Decoded (Video Playing)",
+              );
+              playerRef.current.hasDecodedFirstFrame = true;
+            }
           },
         });
       } catch (e) {
-        console.error("❌ Error iniciando JSMpeg:", e);
+        console.error("❌ [CameraFeed] Fatal Error init JSMpeg:", e);
         setError(true);
       }
     }, 500);
