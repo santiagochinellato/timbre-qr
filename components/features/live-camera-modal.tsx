@@ -12,7 +12,7 @@ interface LiveCameraModalProps {
 export function LiveCameraModal({
   isOpen,
   onClose,
-  streamUrl = "ws://localhost:9999",
+  streamUrl,
 }: LiveCameraModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +42,12 @@ export function LiveCameraModal({
 
         if (!JSMpeg) {
           setError("Failed to load video player library");
+          setIsLoading(false);
+          return;
+        }
+
+        if (!streamUrl) {
+          setError("No stream URL provided");
           setIsLoading(false);
           return;
         }

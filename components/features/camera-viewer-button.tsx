@@ -75,7 +75,7 @@ export function CameraViewerButton() {
               {/* Feed - NOW USING LIVE VIDEO PLAYER */}
               <div className="aspect-video bg-black relative flex-shrink-0">
                 <LiveVideoPlayer
-                  streamUrl="ws://localhost:9999"
+                  streamUrl={process.env.NEXT_PUBLIC_CAMERA_WS_URL || ""}
                   className="w-full h-full"
                 />
               </div>
@@ -134,7 +134,7 @@ export function CameraViewerButton() {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
