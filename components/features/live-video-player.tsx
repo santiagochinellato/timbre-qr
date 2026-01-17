@@ -34,7 +34,8 @@ export function LiveVideoPlayer({
 
     // Load JSMPEG library dynamically
     const script = document.createElement("script");
-    script.src = "https://jsmpeg.com/jsmpeg.min.js";
+    script.src =
+      "https://cdn.jsdelivr.net/gh/phoboslab/jsmpeg@master/jsmpeg.min.js";
     script.async = true;
     document.body.appendChild(script);
 
