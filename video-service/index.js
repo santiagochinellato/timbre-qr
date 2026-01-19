@@ -1,110 +1,152 @@
 const express = require('express');
-const { spawn } = require('child_process');
-const WebSocket = require('ws');
-const http = require('http');
+const Stream = require('node-rtsp-stream');
+const app = require('express')();
+const server = require('http').createServer(app);
 
-// --- CONFIGURACIÓN ---
-const PORT = process.env.PORT || 8080;
+// CONFIGURACIÓN ROBUSTA
+const CONFIG = {
+    wsPort: process.env.WS_PORT || 9999,
+    httpPort: process.env.PORT || 8080,
+    rtspUrl: process.env.RTSP_URL,
+    circuitBreaker: {
+        failureThreshold: 3,    // Máximo fallos seguidos
+        cooldownMs: 30000,      // Tiempo de espera (30s) si se abre el circuito
+        resetTimeoutMs: 60000   // Tiempo para resetear contador si todo va bien
+    }
+};
 
-// La URL RTSP viene de las variables de entorno de Railway
-// Formato esperado: rtsp://admin:Univers0@186.0.212.50:2000/cam/realmonitor?channel=1&subtype=0
-const RTSP_URL = process.env.RTSP_STREAM_URL;
-
-if (!RTSP_URL) {
-    console.error("❌ ERROR CRÍTICO: Falta la variable de entorno RTSP_STREAM_URL");
-    process.exit(1);
-}
-
-const app = express();
-
-// Endpoint de salud para que Railway sepa que estamos vivos
-app.get('/', (req, res) => res.send('Video Relay Service Online 🟢'));
-
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-let ffmpegProcess = null;
-
-// --- FUNCIÓN DE STREAMING ---
-function startFfmpeg() {
-    if (ffmpegProcess) return;
-
-    console.log(`[FFMPEG] 🎬 Iniciando conversión de stream...`);
-    // Mask password in logs
-    const safeUrl = RTSP_URL.replace(/:[^:@]+@/, ':****@');
-    console.log(`[FFMPEG] Target: ${safeUrl}`);
-
-    const args = [
-        '-rtsp_transport', 'tcp', // CRÍTICO: Usar TCP para evitar cortes por internet
-        '-i', RTSP_URL,
-        '-f', 'mpegts',           // Formato compatible con JSMpeg
-        '-codec:v', 'mpeg1video', // Codec video
-        '-r', '25',               // FPS fluidos
-        '-s', '640x360',          // Resolución optimizada para móviles (ahorra ancho de banda)
-        '-b:v', '1000k',          // Bitrate máximo 1mb
-        '-bf', '0',               // Latencia cero
-        '-an',                    // Sin audio (quitar si necesitas audio)
-        '-'                       // Salida standard
-    ];
-
-    ffmpegProcess = spawn('ffmpeg', args);
-
-    ffmpegProcess.on('error', (err) => {
-        console.error('[FFMPEG ERROR] Failed to spawn process:', err);
-    });
-
-    ffmpegProcess.stdout.on('data', (data) => {
-        // Broadcast a todos los clientes conectados
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                try {
-                    client.send(data);
-                } catch (e) {
-                    console.error('[WS ERROR] Send failed:', e);
-                }
-            }
-        });
-    });
-
-    ffmpegProcess.stderr.on('data', (data) => {
-        const msg = data.toString();
-        // Log all FFmpeg output to debug startup issues
-        if (process.env.DEBUG_FFMPEG || msg.includes('Error') || msg.includes('fail') || msg.includes('panic')) {
-            console.log(`[FFMPEG LOG] ${msg.trim()}`);
-        }
-    });
-
-    ffmpegProcess.on('close', (code) => {
-        console.log(`[FFMPEG] 🛑 Proceso terminó (Código: ${code})`);
-        ffmpegProcess = null;
-        // Reiniciar automáticamente si hay clientes esperando
-        if (wss.clients.size > 0) {
-            console.log("🔄 Reintentando en 2 segundos...");
-            setTimeout(startFfmpeg, 2000);
-        }
-    });
-}
-
-// --- GESTIÓN DE WEBSOCKETS ---
-wss.on('connection', (ws, req) => {
-    console.log(`[CLIENTE] 👋 Nueva conexión desde ${req.socket.remoteAddress}`);
-    
-    // Si es el primer cliente, arrancamos FFmpeg
-    if (!ffmpegProcess) {
-        startFfmpeg();
+class StreamManager {
+    constructor() {
+        this.stream = null;
+        this.failures = 0;
+        this.state = 'IDLE'; // IDLE, STREAMING, COOLDOWN
+        this.cooldownTimer = null;
+        this.lastFailure = null;
     }
 
-    ws.on('close', () => {
-        console.log('[CLIENTE] 🔌 Desconectado');
-        // Opcional: Si no quedan clientes, matar FFmpeg para ahorrar CPU en Railway
-        if (wss.clients.size === 0 && ffmpegProcess) {
-            console.log("[AHORRO] 💤 Sin clientes, apagando FFmpeg...");
-            ffmpegProcess.kill('SIGINT');
-            ffmpegProcess = null;
+    log(level, message, data = {}) {
+        // Logging Estructurado (JSON) para producción
+        // En entorno local (no-json) podemos hacerlo más legible si se quiere
+        console.log(JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level,
+            message,
+            state: this.state,
+            failures: this.failures,
+            ...data
+        }));
+    }
+
+    start() {
+        if (this.state === 'COOLDOWN') {
+            const remaining = Math.ceil((this.cooldownTimer - Date.now()) / 1000);
+            this.log('WARN', `Circuit Breaker ABIERTO. Ignorando solicitud. Espera ${remaining}s.`);
+            return;
         }
+
+        if (this.state === 'STREAMING') {
+            this.log('INFO', 'Stream ya activo. Reutilizando.');
+            return;
+        }
+
+        if (!CONFIG.rtspUrl) {
+            this.log('ERROR', 'No RTSP_URL provided');
+            return;
+        }
+
+        try {
+            this.log('INFO', 'Iniciando proceso FFmpeg...');
+            
+            this.stream = new Stream({
+                name: 'timbre-qr-stream',
+                streamUrl: CONFIG.rtspUrl,
+                wsPort: CONFIG.wsPort,
+                ffmpegOptions: { // Opciones para reducir carga
+                    '-stats': '', 
+                    '-r': 20, // Bajar framerate para estabilidad
+                    '-s': '640x480' // Forzar resolución manejable
+                }
+            });
+
+            this.state = 'STREAMING';
+
+            // node-rtsp-stream no expone un evento 'exit' claro del proceso ffmpeg
+            // confiamos en que Docker reinicie si el proceso principal de node muere,
+            // pero internamente, si el stream falla, la librería suele intentar reconectar o lanzar error.
+            
+        } catch (error) {
+            this.handleFailure(error);
+        }
+    }
+
+    stop() {
+        if (this.stream) {
+            // La librería node-rtsp-stream a veces no limpia bien
+            try {
+                this.stream.stop();
+            } catch (e) {
+                this.log('WARN', 'Error stopping stream', { error: e.message });
+            }
+            this.stream = null;
+            this.state = 'IDLE';
+            this.log('INFO', 'Stream detenido manualmente.');
+        }
+    }
+
+    handleFailure(err) {
+        this.failures++;
+        this.lastFailure = Date.now();
+        this.stop(); // Limpieza forzosa
+
+        this.log('ERROR', 'Fallo detectado en Stream', { error: err.message });
+
+        if (this.failures >= CONFIG.circuitBreaker.failureThreshold) {
+            this.openCircuit();
+        } else {
+            // Reintento rápido (backoff simple)
+            const delay = 2000 * this.failures;
+            this.log('INFO', `Reintentando en ${delay}ms...`);
+            setTimeout(() => this.start(), delay);
+        }
+    }
+
+    openCircuit() {
+        this.state = 'COOLDOWN';
+        this.cooldownTimer = Date.now() + CONFIG.circuitBreaker.cooldownMs;
+        this.log('CRITICAL', '⚠️ CIRCUIT BREAKER ACTIVADO. Pausando intentos de video.', {
+            reason: 'Umbral de fallos excedido'
+        });
+
+        setTimeout(() => {
+            this.log('INFO', 'Circuit Breaker: Enfriamiento terminado. Estado: HALF-OPEN');
+            this.failures = 0;
+            this.state = 'IDLE';
+            // Auto-retomar intentando reiniciar
+            this.start();
+        }, CONFIG.circuitBreaker.cooldownMs);
+    }
+}
+
+const manager = new StreamManager();
+
+// API simple para healthcheck y control
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        videoState: manager.state, 
+        failures: manager.failures 
     });
 });
 
-server.listen(PORT, () => {
-    console.log(`✅ Servidor de Video listo en puerto ${PORT}`);
+// Arrancar servidor HTTP auxiliar
+server.listen(CONFIG.httpPort, () => {
+    console.log(`Video Service Control API running on port ${CONFIG.httpPort}`);
+    // Iniciar stream automáticamente al arrancar el contenedor
+    manager.start();
+});
+
+// Manejo de señales para evitar procesos zombies en Docker
+process.on('SIGTERM', () => {
+    manager.stop();
+    process.exit(0);
 });

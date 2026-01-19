@@ -1,0 +1,6 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+# We'll mount the source code in docker-compose for development
+CMD ["npm", "run", "dev"]

@@ -6,10 +6,9 @@ import { eq } from "drizzle-orm";
 // import { uploadVisitorSelfie } from '@/lib/storage/upload'; 
 import { sendPushNotification } from "@/actions/push-actions";
 
-const NOTIFICATION_LIMIT = 3;
-const NOTIFICATION_WINDOW = 60 * 1000; // 1 minute
-// Simple in-memory rate limiter (Note: resets on server restart, use Redis for prod)
-const rateLimit = new Map<string, number[]>();
+// Rate limiting constraints moved to Redis logic
+// const NOTIFICATION_LIMIT = 3; 
+// const NOTIFICATION_WINDOW = 60 * 1000;
 
 export async function ringDoorbell(prevState: any, formData: FormData) {
     const imageFile = formData.get("image") as File;
@@ -56,21 +55,17 @@ export async function ringDoorbell(prevState: any, formData: FormData) {
             return { success: false, message: "Unit not found" };
         }
 
-        // 2. Anti-Spam / Rate Limiting
-        const now = Date.now();
-        const timestamps = rateLimit.get(unitId) || [];
-        const recentNotifications = timestamps.filter(t => now - t < NOTIFICATION_WINDOW);
+
+        // 2. Anti-Spam / Rate Limiting (Redis Optimized)
+        const { checkRateLimit } = await import("@/lib/rate-limit");
         
-        if (recentNotifications.length >= NOTIFICATION_LIMIT) {
-             // Too many requests, silently log or return specific error?
-             // User requested: "si no se responde que aparezca otra a los 15 segundos".
-             // We'll enforce a strict limit here for safety, but the client can handle the "15s" visual retry.
+        // Limit: 5 requests per 60 seconds per Unit
+        const limitResult = await checkRateLimit(unitId, 5, 60);
+
+        if (!limitResult.success) {
              console.warn(`Rate limit exceeded for unit ${unitResult.label}`);
              return { success: false, message: "Espere un momento antes de volver a llamar." };
         }
-        
-        recentNotifications.push(now);
-        rateLimit.set(unitId, recentNotifications);
 
 
         // 3. Insert Log
