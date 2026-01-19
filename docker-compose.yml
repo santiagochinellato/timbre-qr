@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  video-service:
+    build:
+      context: ./video-service
+    restart: on-failure:5  # Limit restart attempts to prevent infinite loop
+    environment:
+      - PORT=8080
+      - RTSP_URL=rtsp://admin:Univers0@186.0.212.50:9081/cam/realmonitor?channel=1&subtype=1
+    ports:
+      - "8080:8080"
+      - "9999:9999" # Websocket stream
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
