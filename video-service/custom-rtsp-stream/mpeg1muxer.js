@@ -8,23 +8,25 @@ Mpeg1Muxer = function(options) {
   this.url = options.url
   this.exitCode = undefined
   
-  // STRICT JSMPEG COMPATIBLE ARGUMENTS
-  // We explicitly ignore options.ffmpegOptionsMain to prevent external pollution
+  // STRICT JSMPEG COMPATIBLE ARGUMENTS (Low Latency / Stable)
   this.spawnOptions = [
-    "-rtsp_transport", "tcp", // FORCE TCP: Crucial for stable RTSP in Docker/Cloud
-    "-i", this.url,           // Input URL
-    "-f", "mpegts",           // Format: MPEG-TS (Required by JSMpeg)
-    "-codec:v", "mpeg1video", // Video Codec: MPEG1 (Required by JSMpeg)
-    "-b:v", "1000k",          // Bitrate: 1000k (Stable quality/bandwidth balance)
-    "-maxrate", "1000k",      // Cap max bitrate to prevent stalls
-    "-bufsize", "2000k",      // Buffer size control
-    "-bf", "0",               // No B-Frames: Reduces latency significantly
-    "-r", "30",               // Framerate: 30fps
-    "-g", "30",               // GOP: 1 keyframe per second
-    "-an",                    // No Audio: Disable audio to isolate video issues
-    "-pix_fmt", "yuv420p",    // Color space (Critical for JSMpeg)
-    "-s", "640x360",          // Hardcoded Resolution (Matches VideoStream header)
-    "-"                       // Output to STDOUT
+    "-rtsp_transport", "tcp", // Force TCP to prevent artifacting
+    "-i", this.url,
+    "-f", "mpegts",           // JSMpeg container
+    "-codec:v", "mpeg1video", // JSMpeg codec
+    
+    // TUNED FOR STABILITY (800kbps)
+    "-b:v", "800k",           // Bitrate: 800k (Stable for mobile/wifi)
+    "-maxrate", "1000k",      // Burst limit
+    "-bufsize", "1000k",      // Strict buffer
+    "-bf", "0",               // No B-Frames (Lowest latency)
+    "-r", "25",               // 25 FPS (Standard PAL/Security)
+    "-g", "25",               // GOP = 1 second recovery
+    "-an",                    // Disable audio
+    "-pix_fmt", "yuv420p",    // Compliance
+    "-s", "640x360",          // Hardcoded Scaling (Matches VideoStream header)
+    
+    "-"                       // STDOUT
   ];
   
   console.log('FFmpeg Spawn Options:', this.spawnOptions.join(' '))
@@ -38,6 +40,8 @@ Mpeg1Muxer = function(options) {
     return this.emit('mpeg1data', data)
   })
   this.stream.stderr.on('data', (data) => {
+    // Log stderr for debugging if needed, but beware of spam
+    // console.log(`FFmpeg STDERR: ${data.toString()}`); 
     return this.emit('ffmpegStderr', data)
   })
   this.stream.on('exit', (code, signal) => {
