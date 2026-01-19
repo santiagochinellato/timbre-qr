@@ -5,8 +5,10 @@ const server = require('http').createServer(app);
 
 // CONFIGURACIÓN ROBUSTA
 const CONFIG = {
-    wsPort: process.env.WS_PORT || 9999,
-    httpPort: process.env.PORT || 8080,
+    // En Railway, el puerto público se inyecta en PORT. Lo usaremos para el WebSocket (Video).
+    wsPort: process.env.PORT || 9999,
+    // El puerto HTTP (Healthcheck) queda interno (no expuesto públicamente en plan básico)
+    httpPort: 3001,
     rtspUrl: process.env.RTSP_URL,
     circuitBreaker: {
         failureThreshold: 3,    // Máximo fallos seguidos
@@ -63,6 +65,7 @@ class StreamManager {
                 wsPort: CONFIG.wsPort,
                 ffmpegOptions: { // Opciones para reducir carga
                     '-stats': '', 
+                    '-rtsp_transport': 'tcp', 
                     '-r': 20, // Bajar framerate para estabilidad
                     '-s': '640x480' // Forzar resolución manejable
                 }
