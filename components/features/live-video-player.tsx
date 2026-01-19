@@ -55,6 +55,7 @@ export function LiveVideoPlayer({
           autoplay: true,
           audio: false,
           disableGl: false, // Try WebGL for performance
+          videoBufferSize: 1024 * 1024, // 1MB buffer (vs default 512kb) to prevent stalls
           onVideoDecode: () => {
             // First frame decoded!
             clearTimeout(loadTimeout);

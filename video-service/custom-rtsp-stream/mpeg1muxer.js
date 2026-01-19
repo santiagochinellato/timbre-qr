@@ -20,12 +20,14 @@ Mpeg1Muxer = function(options) {
   }
   
   this.spawnOptions = [
-    "-rtsp_transport", "tcp", // Force TCP for Input (Stability)
+    "-rtsp_transport", "tcp",
     "-i", this.url,
     '-f', 'mpegts',
     '-codec:v', 'mpeg1video',
-    '-bf', '0',               // No B-Frames (Critical for JSMpeg stability)
-    ...this.additionalFlags,  // Output flags (bitrate, framerate, etc)
+    '-bf', '0',               
+    '-s', '640x360',          // Resize to 360p (MPEG1 is inefficient at HD)
+    '-b:v', '800k',           // Limit bitrate further
+    ...this.additionalFlags,
     '-'
   ]
   
