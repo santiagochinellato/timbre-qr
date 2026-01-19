@@ -20,13 +20,21 @@ Mpeg1Muxer = function(options) {
   }
   
   this.spawnOptions = [
-    "-rtsp_transport", "tcp",
+    "-rtsp_transport", "tcp", // Force TCP for stability
     "-i", this.url,
-    '-f', 'mpegts',
-    '-codec:v', 'mpeg1video',
-    '-bf', '0',               
-    '-s', '640x360',          // Resize to 360p (MPEG1 is inefficient at HD)
-    '-b:v', '800k',           // Limit bitrate further
+    '-f', 'mpegts',           // Output format for WebSocket
+    '-codec:v', 'mpeg1video', // Codec for JSMpeg
+    
+    // CRITICAL STABILITY FLAGS:
+    '-bf', '0',               // No B-frames (JSMpeg requirement)
+    '-an',                    // Disable Audio (Prevents sync/garbage issues)
+    '-s', '640x360',          // Resize to 360p (Performance)
+    '-r', '30',               // Force 30 fps
+    '-g', '30',               // GOP size 30 (1 keyframe/sec) for fast recovery
+    '-maxrate', '1200k',      // hard limit bitrate
+    '-bufsize', '2000k',      // buffer size
+    '-pix_fmt', 'yuv420p',    // Explicit pixel format
+    
     ...this.additionalFlags,
     '-'
   ]
