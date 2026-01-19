@@ -66,7 +66,7 @@ class StreamManager {
                 ffmpegOptions: {
                     '-stats': '', 
                     '-r': 30,
-                    '-rtsp_transport': 'tcp' // Force TCP to avoid UDP packet loss artifacts
+                    '-b:v': '1000k' // Limit bitrate to 1Mbps for better network stability
                 }
             });
 

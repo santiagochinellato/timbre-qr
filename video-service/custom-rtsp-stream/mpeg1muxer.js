@@ -19,51 +19,13 @@ Mpeg1Muxer = function(options) {
     }
   }
   
-  // PATCH: Split options into input (before -i) and output (after -i)
-  // For simplicity specific to this issue, we move specific input flags like transport to the front
-  // But since the user only sets -r and -rtsp_transport, placing all before input is risky for encoding options.
-  // Let's explicitly look for 'rtsp_transport' and move it to inputFlags.
-  
-  var inputFlags = []
-  var outputFlags = []
-  
-  // Manual separation of known input flags
-  var i = 0;
-  while (i < this.additionalFlags.length) {
-      var flag = this.additionalFlags[i]
-      var val = this.additionalFlags[i+1]
-      
-      if (flag === '-rtsp_transport') {
-          inputFlags.push(flag, val)
-          i += 2
-      } else {
-          outputFlags.push(flag)
-          if (val && !val.startsWith('-')) { // primitive check for value
-              outputFlags.push(val)
-              i += 2
-          } else {
-              i += 1
-          }
-      }
-  }
-
-  // RE-SIMPLIFICATION: 
-  // Determining which flag takes a value is hard without a map.
-  // BETTER APPROACH: Just put ALL provided options BEFORE -i if they are input-safe?
-  // FFmpeg allows most options before -i.
-  // -r before -i sets the input framerate (good for RTSP).
-  // -stats is global.
-  // -rtsp_transport is input only.
-  // So for this specific use case, putting everything BEFORE -i is safer than AFTER.
-  
   this.spawnOptions = [
-    ...this.additionalFlags, // MOVE FLAGS BEFORE INPUT
-    "-i",
-    this.url,
-    '-f',
-    'mpegts',
-    '-codec:v',
-    'mpeg1video',
+    "-rtsp_transport", "tcp", // Force TCP for Input (Stability)
+    "-i", this.url,
+    '-f', 'mpegts',
+    '-codec:v', 'mpeg1video',
+    '-bf', '0',               // No B-Frames (Critical for JSMpeg stability)
+    ...this.additionalFlags,  // Output flags (bitrate, framerate, etc)
     '-'
   ]
   
