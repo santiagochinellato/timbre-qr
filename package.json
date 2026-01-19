@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:video": "RTSP_URL='rtsp://admin:Univers0@186.0.212.50:2000/cam/realmonitor?channel=1&subtype=0' PORT=9999 node video-service/index.js",
+    "dev:all": "concurrently -n \"WEB,VIDEO\" -c \"blue,magenta\" \"npm run dev\" \"npm run dev:video\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -48,6 +50,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
