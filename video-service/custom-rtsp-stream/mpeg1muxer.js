@@ -10,6 +10,9 @@ Mpeg1Muxer = function(options) {
   this.ffmpegOptions = options.ffmpegOptions
   this.exitCode = undefined
   this.additionalFlags = []
+  
+  // We ignore most incoming ffmpegOptions to prevent conflicts, 
+  // but keep them in additionalFlags just in case we need generic ones later.
   if (this.ffmpegOptions) {
     for (key in this.ffmpegOptions) {
       this.additionalFlags.push(key)
@@ -25,15 +28,18 @@ Mpeg1Muxer = function(options) {
     '-f', 'mpegts',           // Output format for WebSocket
     '-codec:v', 'mpeg1video', // Codec for JSMpeg
     
-    // CRITICAL STABILITY FLAGS:
-    '-bf', '0',               // No B-frames (JSMpeg requirement)
-    '-an',                    // Disable Audio (Prevents sync/garbage issues)
-    '-s', '640x360',          // Resize to 360p (Performance)
-    '-r', '30',               // Force 30 fps
-    '-g', '30',               // GOP size 30 (1 keyframe/sec) for fast recovery
-    '-maxrate', '1200k',      // hard limit bitrate
-    '-bufsize', '2000k',      // buffer size
-    '-pix_fmt', 'yuv420p',    // Explicit pixel format
+    // CRITICAL COMPATIBILITY FLAGS
+    '-bf', '0',               // No B-frames (Critical for JSMpeg)
+    '-an',                    // No Audio (Isolates video issues)
+    '-s', '640x360',          // Resize to 360p
+    
+    // BITRATE & QUALITY CONTROL
+    '-b:v', '1000k',          // Target Bitrate: 1Mbps
+    '-maxrate', '1200k',      // Max Bitrate: 1.2Mbps
+    '-bufsize', '2000k',      // Buffer: 2Mbps
+    '-r', '30',               // Framerate: 30fps
+    '-g', '30',               // GOP: 1 sec recovery
+    '-pix_fmt', 'yuv420p',    // Standard pixel format
     
     ...this.additionalFlags,
     '-'

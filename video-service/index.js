@@ -64,9 +64,7 @@ class StreamManager {
                 streamUrl: CONFIG.rtspUrl,
                 wsPort: CONFIG.wsPort,
                 ffmpegOptions: {
-                    '-stats': '', 
-                    '-r': 30,
-                    '-b:v': '1000k' // Limit bitrate to 1Mbps for better network stability
+                    '-stats': '', // Enable stats logging
                 }
             });
 
