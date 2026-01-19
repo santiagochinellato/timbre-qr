@@ -65,7 +65,8 @@ class StreamManager {
                 wsPort: CONFIG.wsPort,
                 ffmpegOptions: {
                     '-stats': '', 
-                    '-r': 30 
+                    '-r': 30,
+                    '-rtsp_transport': 'tcp' // Force TCP to avoid UDP packet loss artifacts
                 }
             });
 
