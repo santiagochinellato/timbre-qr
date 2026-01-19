@@ -14,6 +14,7 @@ RUN npm install --production
 
 # 4. Source code
 COPY index.js .
+COPY custom-rtsp-stream ./custom-rtsp-stream
 
 # 5. Environment
 # Railway provides PORT via env var
