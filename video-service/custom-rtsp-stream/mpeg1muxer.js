@@ -5,49 +5,34 @@ util = require('util')
 events = require('events')
 
 Mpeg1Muxer = function(options) {
-  var key
   this.url = options.url
-  this.ffmpegOptions = options.ffmpegOptions
   this.exitCode = undefined
-  this.additionalFlags = []
   
-  // We ignore most incoming ffmpegOptions to prevent conflicts, 
-  // but keep them in additionalFlags just in case we need generic ones later.
-  if (this.ffmpegOptions) {
-    for (key in this.ffmpegOptions) {
-      this.additionalFlags.push(key)
-      if (String(this.ffmpegOptions[key]) !== '') {
-        this.additionalFlags.push(String(this.ffmpegOptions[key]))
-      }
-    }
-  }
-  
+  // STRICT JSMPEG COMPATIBLE ARGUMENTS
+  // We explicitly ignore options.ffmpegOptionsMain to prevent external pollution
   this.spawnOptions = [
-    "-rtsp_transport", "tcp", // Force TCP for stability
-    "-i", this.url,
-    '-f', 'mpegts',           // Output format for WebSocket
-    '-codec:v', 'mpeg1video', // Codec for JSMpeg
-    
-    // CRITICAL COMPATIBILITY FLAGS
-    '-bf', '0',               // No B-frames (Critical for JSMpeg)
-    '-an',                    // No Audio (Isolates video issues)
-    '-s', '640x360',          // Resize to 360p
-    
-    // BITRATE & QUALITY CONTROL
-    '-b:v', '1000k',          // Target Bitrate: 1Mbps
-    '-maxrate', '1200k',      // Max Bitrate: 1.2Mbps
-    '-bufsize', '2000k',      // Buffer: 2Mbps
-    '-r', '30',               // Framerate: 30fps
-    '-g', '30',               // GOP: 1 sec recovery
-    '-pix_fmt', 'yuv420p',    // Standard pixel format
-    
-    ...this.additionalFlags,
-    '-'
-  ]
+    "-rtsp_transport", "tcp", // FORCE TCP: Crucial for stable RTSP in Docker/Cloud
+    "-i", this.url,           // Input URL
+    "-f", "mpegts",           // Format: MPEG-TS (Required by JSMpeg)
+    "-codec:v", "mpeg1video", // Video Codec: MPEG1 (Required by JSMpeg)
+    "-b:v", "1000k",          // Bitrate: 1000k (Stable quality/bandwidth balance)
+    "-maxrate", "1000k",      // Cap max bitrate to prevent stalls
+    "-bufsize", "2000k",      // Buffer size control
+    "-bf", "0",               // No B-Frames: Reduces latency significantly
+    "-r", "30",               // Framerate: 30fps
+    "-g", "30",               // GOP: 1 keyframe per second
+    "-an",                    // No Audio: Disable audio to isolate video issues
+    "-pix_fmt", "yuv420p",    // Color space (Critical for JSMpeg)
+    "-s", "640x360",          // Hardcoded Resolution (Matches VideoStream header)
+    "-"                       // Output to STDOUT
+  ];
   
+  console.log('FFmpeg Spawn Options:', this.spawnOptions.join(' '))
+
   this.stream = child_process.spawn(options.ffmpegPath, this.spawnOptions, {
     detached: false
   })
+  
   this.inputStreamStarted = true
   this.stream.stdout.on('data', (data) => {
     return this.emit('mpeg1data', data)
