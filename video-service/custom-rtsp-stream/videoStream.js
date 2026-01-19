@@ -14,6 +14,7 @@ VideoStream = function(options) {
   this.streamUrl = options.streamUrl
   this.width = options.width || 640
   this.height = options.height || 360
+  this.server = options.server // HTTP Server instance (optional)
   this.wsPort = options.wsPort
   this.inputStreamStarted = false
   this.stream = undefined
@@ -86,9 +87,16 @@ VideoStream.prototype.startMpeg1Stream = function() {
 }
 
 VideoStream.prototype.pipeStreamToSocketServer = function() {
-  this.wsServer = new ws.Server({
-    port: this.wsPort
-  })
+  // If a shared server instance is provided, attach to it.
+  // Otherwise, create a new server on the specified port.
+  if (this.server) {
+      this.wsServer = new ws.Server({ server: this.server });
+      console.log(`${this.name}: Attached WebSocket to existing HTTP Server.`);
+  } else {
+      this.wsServer = new ws.Server({ port: this.wsPort });
+      console.log(`${this.name}: Created WebSocket Server on port ${this.wsPort}`);
+  }
+  
   this.wsServer.on("connection", (socket, request) => {
     return this.onSocketConnect(socket, request)
   })

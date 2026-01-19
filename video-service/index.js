@@ -62,9 +62,9 @@ class StreamManager {
             this.stream = new Stream({
                 name: 'timbre-qr-stream',
                 streamUrl: CONFIG.rtspUrl,
-                wsPort: CONFIG.wsPort,
+                server: server, // Attach to main HTTP server (Port 8080/Railway PORT)
                 ffmpegOptions: {
-                    '-stats': '', // Enable stats logging
+                    '-stats': '', 
                 }
             });
 
