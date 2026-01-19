@@ -1,5 +1,5 @@
 const express = require('express');
-const Stream = require('node-rtsp-stream');
+const Stream = require('./custom-rtsp-stream/videoStream');
 const app = require('express')();
 const server = require('http').createServer(app);
 
