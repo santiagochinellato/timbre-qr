@@ -66,6 +66,8 @@ class StreamManager {
                 ffmpegOptions: { // Opciones para reducir carga
                     '-stats': '', 
                     '-rtsp_transport': 'tcp', 
+                    '-probesize': '32M',      // Aumentar buffer de análisis
+                    '-analyzeduration': '32M', // Aumentar duración de análisis
                     '-r': 20, // Bajar framerate para estabilidad
                     '-s': '640x480' // Forzar resolución manejable
                 }
