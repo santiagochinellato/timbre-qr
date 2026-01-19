@@ -28,7 +28,7 @@ export function LiveVideoPlayer({
   const [retryCount, setRetryCount] = useState(0);
 
   // Watchdog refs
-  const lastTimeRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(Date.now());
   const watchdogTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const initPlayer = useCallback(() => {
@@ -51,6 +51,8 @@ export function LiveVideoPlayer({
       }
 
       console.log(`🎥 Init JSMpeg: ${streamUrl} (Attempt ${retryCount + 1})`);
+
+      lastTimeRef.current = Date.now(); // Reset watchdog timer on new connection
 
       playerRef.current = new JSMpeg.Player(streamUrl, {
         canvas: canvasRef.current,
