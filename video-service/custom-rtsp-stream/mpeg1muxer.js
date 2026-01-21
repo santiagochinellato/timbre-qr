@@ -9,14 +9,15 @@ Mpeg1Muxer = function(options) {
   this.exitCode = undefined
   
   // STRICT JSMPEG COMPATIBLE ARGUMENTS (Low Latency / Stable)
+  // STRICT JSMPEG COMPATIBLE ARGUMENTS (Low Latency / Stable)
   this.spawnOptions = [
     "-rtsp_transport", "tcp", // Force TCP to prevent artifacting
     "-i", this.url,
     "-f", "mpegts",           // JSMpeg container
     "-codec:v", "mpeg1video", // JSMpeg codec
     
-    // TUNED FOR STABILITY (800kbps)
-    "-b:v", "800k",           // Bitrate: 800k (Stable for mobile/wifi)
+    // TUNED FOR STABILITY (1000kbps)
+    "-b:v", "1000k",          // Bitrate: 1000k (Stable for mobile/wifi)
     "-maxrate", "1000k",      // Burst limit
     "-bufsize", "1000k",      // Strict buffer
     "-bf", "0",               // No B-Frames (Lowest latency)
@@ -25,6 +26,7 @@ Mpeg1Muxer = function(options) {
     "-an",                    // Disable audio
     "-pix_fmt", "yuv420p",    // Compliance
     "-s", "640x360",          // Hardcoded Scaling (Matches VideoStream header)
+    "-loglevel", "quiet",     // <--- IMPORTANTE: Silencia logs para que no rompan el WebSocket
     
     "-"                       // STDOUT
   ];

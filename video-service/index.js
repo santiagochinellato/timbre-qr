@@ -27,8 +27,11 @@ const stream = new Stream({
     '-rtsp_transport': 'tcp', 
     '-f': 'mpegts',
     '-codec:v': 'mpeg1video',
-    '-b:v': '800k',
-    '-bf': '0'
+    '-b:v': '1000k',
+    '-r': 25,
+    '-s': '640x360',
+    '-bf': 0,
+    '-loglevel': 'quiet'
   }
 });
 
