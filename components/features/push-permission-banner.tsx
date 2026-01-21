@@ -41,11 +41,14 @@ export function PushPermissionBanner() {
     try {
       if (!("serviceWorker" in navigator)) return;
 
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
         ),
       });
 

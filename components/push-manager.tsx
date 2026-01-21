@@ -28,14 +28,16 @@ export function PushManager() {
           // Wait for the service worker to be ready
           await navigator.serviceWorker.ready;
 
-          const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(
-              process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-            ),
-          });
-
-          await subscribeUser(subscription.toJSON());
+          // Only subscribe if permission is already granted
+          if (Notification.permission === "granted") {
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(
+                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+              ),
+            });
+            await subscribeUser(subscription.toJSON());
+          }
         } catch (error) {
           console.error("Service Worker registration failed:", error);
         }

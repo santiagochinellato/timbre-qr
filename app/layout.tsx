@@ -4,6 +4,7 @@ import "./globals.css";
 import SmoothScroll from "@/components/layout/smooth-scroll";
 import { Toaster } from "@/components/ui/toast";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PushManager } from "@/components/push-manager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SmoothScroll>
+            <PushManager />
             {children}
             <Toaster />
           </SmoothScroll>
