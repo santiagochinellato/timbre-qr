@@ -3,10 +3,19 @@
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 
-export function LiveVideoPlayer() {
-  // 1. Obtenemos la URL base del servicio de video desde las variables de entorno
-  // La variable suele ser wss://... así que la limpiamos para que sea https://
-  const rawStreamUrl = process.env.NEXT_PUBLIC_CAMERA_WS_URL || "";
+export interface LiveVideoPlayerProps {
+  streamUrl?: string;
+  className?: string;
+}
+
+export function LiveVideoPlayer({
+  streamUrl,
+  className = "",
+}: LiveVideoPlayerProps) {
+  // 1. Obtenemos la URL base: Props > Env Var > Default Empty
+  const envUrl = process.env.NEXT_PUBLIC_CAMERA_WS_URL || "";
+  const rawStreamUrl = streamUrl || envUrl;
+
   const streamBaseUrl = rawStreamUrl
     .replace("wss://", "https://")
     .replace("ws://", "http://");
@@ -44,7 +53,9 @@ export function LiveVideoPlayer() {
   }
 
   return (
-    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-2xl ring-1 ring-white/10">
+    <div
+      className={`w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-2xl ring-1 ring-white/10 ${className}`}
+    >
       {/* IFRAME MÁGICO DE GO2RTC 
         - allow="autoplay; fullscreen; microphone": Permisos necesarios
         - scrolling="no": Evita barras de desplazamiento feas
