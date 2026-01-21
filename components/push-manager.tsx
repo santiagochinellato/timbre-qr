@@ -30,11 +30,17 @@ export function PushManager() {
 
           // Only subscribe if permission is already granted
           if (Notification.permission === "granted") {
+            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            if (!vapidKey) {
+              console.error(
+                "❌ VAPID Public Key is missing in environment variables.",
+              );
+              return;
+            }
+
             const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(
-                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-              ),
+              applicationServerKey: urlBase64ToUint8Array(vapidKey),
             });
             await subscribeUser(subscription.toJSON());
           }
