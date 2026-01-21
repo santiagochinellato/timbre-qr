@@ -1,25 +1,14 @@
-FROM node:18-bullseye-slim
+# Usamos la imagen oficial de Go2RTC (Súper ligera)
+FROM alexxit/go2rtc:latest
 
-# 1. Install FFmpeg
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
+# Copiamos la configuración
+COPY go2rtc.yaml /config/go2rtc.yaml
 
-# 2. Work directory
-WORKDIR /app
+# Railway asigna un puerto dinámico en la variable $PORT.
+# Go2RTC no lee $PORT nativamente en el yaml, así que hacemos un truco al arrancar
+# para reemplazar el puerto 8080 por el puerto real de Railway.
+USER root
+RUN apk add --no-cache gettext
 
-# 3. Dependencies
-COPY package.json ./
-RUN npm install --production
-
-# 4. Source code
-COPY index.js .
-COPY custom-rtsp-stream ./custom-rtsp-stream
-
-# 5. Environment
-# Railway provides PORT via env var
-ENV PORT=8080
-EXPOSE 8080
-
-# 6. Start command
-CMD ["node", "index.js"]
+# Script de arranque
+CMD sed -i "s/:8080/:$PORT/g" /config/go2rtc.yaml && /bin/go2rtc -config /config/go2rtc.yaml

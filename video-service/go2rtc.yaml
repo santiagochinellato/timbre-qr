@@ -1,0 +1,10 @@
+streams:
+  # Nombre del stream: doorbell
+  doorbell:
+    - "rtsp://admin:Univers0@186.0.212.50:2000/cam/realmonitor?channel=1&subtype=0"
+    # El subtype=0 es el stream principal (alta calidad).
+    # Si va lento, prueba subtype=1 (substream, menor calidad pero más fluido).
+
+api:
+  listen: ":8080" # Railway usa el puerto que le digamos, pero internamente mapearemos al PORT env
+  origin: "*" # Permitir que tu app Next.js se conecte desde cualquier lado
