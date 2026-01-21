@@ -30,13 +30,16 @@ export function DoorCard({
   buildingMqttTopic,
   cameraUrl,
 }: DoorCardProps) {
-  // Fallback to env var if database URL is missing OR if it's not a WebSocket URL (we want Live Video, not HTTP snapshots)
+  // Fallback to env var if database URL is missing OR if it's not a WebSocket/HTTP URL
+  // We accept ws, wss, http, https because Go2RTC uses http/https for WebRTC iframe
   const isInvalidDbUrl =
     !cameraUrl ||
-    (!cameraUrl.startsWith("ws://") && !cameraUrl.startsWith("wss://"));
+    (!cameraUrl.startsWith("ws") && !cameraUrl.startsWith("http"));
+
   const effectiveCameraUrl = !isInvalidDbUrl
     ? cameraUrl
-    : process.env.NEXT_PUBLIC_WS_URL;
+    : process.env.NEXT_PUBLIC_WS_URL ||
+      "wss://video-service-production-44b4.up.railway.app"; // Hardcoded Fallback added here too
 
   if (typeof window !== "undefined") {
     console.log("[DoorCard] Database URL:", cameraUrl);

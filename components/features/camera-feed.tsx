@@ -11,9 +11,12 @@ export function CameraFeed({ url, className = "" }: CameraFeedProps) {
   const [videoSrc, setVideoSrc] = useState("");
 
   useEffect(() => {
-    // If a URL is passed via props, use it. Otherwise fall back to env var.
+    // If a URL is passed via props, use it. Otherwise fall back to env var or hardcoded fallback.
     // Note: The 'url' prop originally came from NEXT_PUBLIC_STREAM_URL or similar.
-    let baseUrl = url || process.env.NEXT_PUBLIC_CAMERA_WS_URL || "";
+    let baseUrl =
+      url ||
+      process.env.NEXT_PUBLIC_WS_URL ||
+      "wss://video-service-production-44b4.up.railway.app";
 
     // Normalize URL: Replace wss:// or ws:// with https:// or http://
     if (baseUrl.startsWith("wss://")) {
