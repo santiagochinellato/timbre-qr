@@ -36,15 +36,12 @@ export function DoorCard({
     (!cameraUrl.startsWith("ws://") && !cameraUrl.startsWith("wss://"));
   const effectiveCameraUrl = !isInvalidDbUrl
     ? cameraUrl
-    : process.env.NEXT_PUBLIC_CAMERA_WS_URL;
+    : process.env.NEXT_PUBLIC_WS_URL;
 
   if (typeof window !== "undefined") {
     console.log("[DoorCard] Database URL:", cameraUrl);
     console.log("[DoorCard] Is Invalid (Must be WS):", isInvalidDbUrl);
-    console.log(
-      "[DoorCard] Env Var URL:",
-      process.env.NEXT_PUBLIC_CAMERA_WS_URL,
-    );
+    console.log("[DoorCard] Env Var URL:", process.env.NEXT_PUBLIC_WS_URL);
     console.log("[DoorCard] Effective URL:", effectiveCameraUrl);
   }
 
