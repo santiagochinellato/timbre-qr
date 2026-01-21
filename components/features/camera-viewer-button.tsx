@@ -74,10 +74,7 @@ export function CameraViewerButton() {
 
               {/* Feed - NOW USING LIVE VIDEO PLAYER */}
               <div className="aspect-video bg-black relative flex-shrink-0">
-                <LiveVideoPlayer
-                  streamUrl={process.env.NEXT_PUBLIC_WS_URL || ""}
-                  className="w-full h-full"
-                />
+                <LiveVideoPlayer className="w-full h-full" />
               </div>
 
               {/* Action Buttons */}
