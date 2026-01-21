@@ -26,7 +26,7 @@ Mpeg1Muxer = function(options) {
     "-an",                    // Disable audio
     "-pix_fmt", "yuv420p",    // Compliance
     "-s", "640x360",          // Hardcoded Scaling (Matches VideoStream header)
-    "-loglevel", "quiet",     // <--- IMPORTANTE: Silencia logs para que no rompan el WebSocket
+    "-loglevel", "info",      // <--- CHANGED: Set to info for debugging
     
     "-"                       // STDOUT
   ];
@@ -43,7 +43,7 @@ Mpeg1Muxer = function(options) {
   })
   this.stream.stderr.on('data', (data) => {
     // Log stderr for debugging if needed, but beware of spam
-    // console.log(`FFmpeg STDERR: ${data.toString()}`); 
+    console.log(`FFmpeg Log: ${data.toString()}`); 
     return this.emit('ffmpegStderr', data)
   })
   this.stream.on('exit', (code, signal) => {

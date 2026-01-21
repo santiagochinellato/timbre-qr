@@ -31,7 +31,7 @@ const stream = new Stream({
     '-r': 25,
     '-s': '640x360',
     '-bf': 0,
-    '-loglevel': 'quiet'
+    '-loglevel': 'info'
   }
 });
 
