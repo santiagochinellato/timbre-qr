@@ -1,6 +1,6 @@
 "use client";
 
-export default function LiveVideoPlayer() {
+export function LiveVideoPlayer() {
   // We transform wss:// to https:// because Go2RTC serves WebRTC over HTTPS
   const streamUrl =
     process.env.NEXT_PUBLIC_CAMERA_WS_URL?.replace("wss://", "https://") || "";
