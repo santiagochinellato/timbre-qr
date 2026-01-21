@@ -12,17 +12,15 @@ export function LiveVideoPlayer({
   streamUrl,
   className = "",
 }: LiveVideoPlayerProps) {
-  // 1. Obtenemos la URL base: Props > Env Var (CAMERA) > Env Var (WS) > Default Empty
-  const envUrl = process.env.NEXT_PUBLIC_WS_URL || "";
+  // 1. Obtenemos la URL base: Props > Env Var (CAMERA) > Env Var (WS) > Hardcoded Fallback
+  const envUrl =
+    process.env.NEXT_PUBLIC_CAMERA_WS_URL ||
+    process.env.NEXT_PUBLIC_WS_URL ||
+    "wss://video-service-production-44b4.up.railway.app";
 
-  // Debug Log
-  if (typeof window !== "undefined") {
-    console.log("[LiveVideoPlayer] Stream Config:", {
-      propUrl: streamUrl,
-      envCameraWs: process.env.NEXT_PUBLIC_CAMERA_WS_URL,
-      envWs: process.env.NEXT_PUBLIC_WS_URL,
-      resolved: streamUrl || envUrl,
-    });
+  // Debug Log (Simplificado)
+  if (typeof window !== "undefined" && !envUrl) {
+    console.warn("[LiveVideoPlayer] All env vars missing, using empty string.");
   }
 
   const rawStreamUrl = streamUrl || envUrl;

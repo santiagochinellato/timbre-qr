@@ -13,7 +13,9 @@ export function LiveCameraModal({ isOpen, onClose }: LiveCameraModalProps) {
   if (!isOpen) return null;
 
   // 1. Obtener y limpiar la URL base (Igual que en LiveVideoPlayer)
-  const rawStreamUrl = process.env.NEXT_PUBLIC_WS_URL || "";
+  const rawStreamUrl =
+    process.env.NEXT_PUBLIC_WS_URL ||
+    "wss://video-service-production-44b4.up.railway.app";
   // Convertimos wss:// o ws:// a https:// o http:// para el iframe
   const streamBaseUrl = rawStreamUrl
     .replace("wss://", "https://")
