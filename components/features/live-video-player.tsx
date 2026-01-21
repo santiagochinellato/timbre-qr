@@ -1,60 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+export default function LiveVideoPlayer() {
+  // We transform wss:// to https:// because Go2RTC serves WebRTC over HTTPS
+  const streamUrl =
+    process.env.NEXT_PUBLIC_CAMERA_WS_URL?.replace("wss://", "https://") || "";
 
-interface LiveVideoPlayerProps {
-  streamUrl?: string; // Optional because we might read from env if not passed
-  className?: string;
-}
-
-export function LiveVideoPlayer({ className = "" }: LiveVideoPlayerProps) {
-  // URL de tu servicio en Railway (SIN wss://, ahora es https://)
-  // Asegúrate de que esta variable en .env sea: https://tu-video-service.up.railway.app
-  // If the env var is WSS, we replace it.
-  const [videoSrc, setVideoSrc] = useState("");
-
-  useEffect(() => {
-    let baseUrl = process.env.NEXT_PUBLIC_CAMERA_WS_URL || "";
-
-    // Normalize URL: Replace wss:// or ws:// with https:// or http://
-    if (baseUrl.startsWith("wss://")) {
-      baseUrl = baseUrl.replace("wss://", "https://");
-    } else if (baseUrl.startsWith("ws://")) {
-      baseUrl = baseUrl.replace("ws://", "http://");
-    }
-
-    // Remove trailing slash if present
-    if (baseUrl.endsWith("/")) {
-      baseUrl = baseUrl.slice(0, -1);
-    }
-
-    // Fallback if empty
-    if (!baseUrl) return;
-
-    // Construct Go2RTC embedding URL
-    // webrtc.html = zero latency
-    // If it fails on some networks, we can fallback to mse.html
-    setVideoSrc(`${baseUrl}/webrtc.html?src=doorbell&media=video`);
-  }, []);
-
-  if (!videoSrc) {
-    return (
-      <div
-        className={`w-full aspect-video bg-black rounded-lg flex items-center justify-center text-white/50 ${className}`}
-      >
-        <p>Cargando stream...</p>
-      </div>
-    );
-  }
+  // Use the native WebRTC player provided by Go2RTC
+  // webrtc.html = zero latency. fallback logic can be added if needed.
+  const videoSrc = `${streamUrl}/webrtc.html?src=doorbell&media=video`;
 
   return (
-    <div
-      className={`w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-lg ${className}`}
-    >
+    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-lg">
       <iframe
         src={videoSrc}
         className="w-full h-full border-none"
-        allow="autoplay; fullscreen; microphone"
+        allow="autoplay; fullscreen; microphone" // Microphone added for 2-way audio potential
         scrolling="no"
       />
     </div>

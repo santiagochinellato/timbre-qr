@@ -6,5 +6,5 @@ streams:
     # Si va lento, prueba subtype=1 (substream, menor calidad pero más fluido).
 
 api:
-  listen: ":8080" # Railway usa el puerto que le digamos, pero internamente mapearemos al PORT env
-  origin: "*" # Permitir que tu app Next.js se conecte desde cualquier lado
+  listen: ":${PORT}" # Railway uses the PORT env var dynamically
+  origin: "*" # Allow connections from anywhere
