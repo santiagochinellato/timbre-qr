@@ -14,7 +14,6 @@ export function LiveVideoPlayer({
 }: LiveVideoPlayerProps) {
   // 1. Obtenemos la URL base: Props > Env Var (CAMERA) > Env Var (WS) > Hardcoded Fallback
   const envUrl =
-    process.env.NEXT_PUBLIC_CAMERA_WS_URL ||
     process.env.NEXT_PUBLIC_WS_URL ||
     "wss://video-service-production-44b4.up.railway.app";
 
