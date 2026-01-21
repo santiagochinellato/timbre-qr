@@ -8,27 +8,28 @@ Mpeg1Muxer = function(options) {
   this.url = options.url
   this.exitCode = undefined
   
-  // STRICT JSMPEG COMPATIBLE ARGUMENTS (Low Latency / Stable)
-  // STRICT JSMPEG COMPATIBLE ARGUMENTS (Low Latency / Stable)
   this.spawnOptions = [
-    "-rtsp_transport", "tcp", // Force TCP to prevent artifacting
+    "-rtsp_transport", "tcp", // Forzar TCP para evitar cortes
     "-i", this.url,
-    "-f", "mpegts",           // JSMpeg container
-    "-codec:v", "mpeg1video", // JSMpeg codec
+    "-f", "mpegts",           // Contenedor MPEG-TS
+    "-codec:v", "mpeg1video", // Codec de video
     
-    // TUNED FOR STABILITY (400kbps)
-    "-b:v", "400k",           // Bitrate: 400k (Lowered for stability)
-    "-maxrate", "400k",      // Burst limit
-    "-bufsize", "400k",      // Strict buffer
-    "-bf", "0",               // No B-Frames (Lowest latency)
-    "-r", "25",               // 25 FPS (Standard PAL/Security)
-    "-g", "25",               // GOP = 1 second recovery
-    "-an",                    // Disable audio
-    "-pix_fmt", "yuv420p",    // Compliance
-    "-s", "640x360",          // Hardcoded Scaling (Matches VideoStream header)
-    "-loglevel", "info",      // <--- CHANGED: Set to info for debugging
+    // OPTIMIZACIÓN CRÍTICA
+    "-hide_banner",           // 🟢 IMPORTANTE: Oculta info de texto que corrompe el stream
+    "-b:v", "800k",           // Bajamos un poco el bitrate para estabilidad
+    "-maxrate", "800k",
+    "-bufsize", "800k",
+    "-bf", "0",               // Latencia cero
+    "-r", "25",               // 25 FPS
+    "-g", "25",               // Un keyframe por segundo (recuperación rápida)
+    "-an",                    // Sin audio
+    "-pix_fmt", "yuv420p",
     
-    "-"                       // STDOUT
+    // RESOLUCIÓN ESTÁNDAR (Múltiplo de 16)
+    "-s", "640x480",          // 🟢 CAMBIO: 640x360 a veces rompe MPEG1. Usamos VGA.
+    
+    "-loglevel", "warning",   // Menos ruido en logs (solo warnings/errores)
+    "-"                       // Salida a STDOUT (Websocket)
   ];
   
   console.log('FFmpeg Spawn Options:', this.spawnOptions.join(' '))
@@ -38,14 +39,18 @@ Mpeg1Muxer = function(options) {
   })
   
   this.inputStreamStarted = true
+  
+  // Enviar video limpio al WebSocket
   this.stream.stdout.on('data', (data) => {
     return this.emit('mpeg1data', data)
   })
+  
+  // Logs de error de FFmpeg (para debug en Railway)
   this.stream.stderr.on('data', (data) => {
-    // Log stderr for debugging if needed, but beware of spam
-    console.log(`FFmpeg Log: ${data.toString()}`); 
+    console.log(`FFmpeg: ${data.toString()}`); 
     return this.emit('ffmpegStderr', data)
   })
+
   this.stream.on('exit', (code, signal) => {
     if (code === 1) {
       console.error('RTSP stream exited with error')
