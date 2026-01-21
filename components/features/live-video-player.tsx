@@ -12,8 +12,11 @@ export function LiveVideoPlayer({
   streamUrl,
   className = "",
 }: LiveVideoPlayerProps) {
-  // 1. Obtenemos la URL base: Props > Env Var > Default Empty
-  const envUrl = process.env.NEXT_PUBLIC_CAMERA_WS_URL || "";
+  // 1. Obtenemos la URL base: Props > Env Var (CAMERA) > Env Var (WS) > Default Empty
+  const envUrl =
+    process.env.NEXT_PUBLIC_CAMERA_WS_URL ||
+    process.env.NEXT_PUBLIC_WS_URL ||
+    "";
   const rawStreamUrl = streamUrl || envUrl;
 
   const streamBaseUrl = rawStreamUrl
