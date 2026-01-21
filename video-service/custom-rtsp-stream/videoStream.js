@@ -125,10 +125,10 @@ VideoStream.prototype.onSocketConnect = function(socket, request) {
   streamHeader.write(STREAM_MAGIC_BYTES)
   streamHeader.writeUInt16BE(this.width, 4)
   streamHeader.writeUInt16BE(this.height, 6)
-  // 🔴 DISABLED HEADER: This was causing "Possible garbage data" in JSMpeg
-  // socket.send(streamHeader, {
-  //   binary: true
-  // })
+  // � RESTORED HEADER: Standard JSMpeg expects this header to know width/height
+  socket.send(streamHeader, {
+    binary: true
+  })
   console.log(`${this.name}: New WebSocket Connection (` + this.wsServer.clients.size + " total)")
 
   socket.remoteAddress = request.connection.remoteAddress

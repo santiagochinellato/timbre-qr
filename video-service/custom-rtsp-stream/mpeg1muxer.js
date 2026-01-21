@@ -16,10 +16,10 @@ Mpeg1Muxer = function(options) {
     "-f", "mpegts",           // JSMpeg container
     "-codec:v", "mpeg1video", // JSMpeg codec
     
-    // TUNED FOR STABILITY (1000kbps)
-    "-b:v", "1000k",          // Bitrate: 1000k (Stable for mobile/wifi)
-    "-maxrate", "1000k",      // Burst limit
-    "-bufsize", "1000k",      // Strict buffer
+    // TUNED FOR STABILITY (400kbps)
+    "-b:v", "400k",           // Bitrate: 400k (Lowered for stability)
+    "-maxrate", "400k",      // Burst limit
+    "-bufsize", "400k",      // Strict buffer
     "-bf", "0",               // No B-Frames (Lowest latency)
     "-r", "25",               // 25 FPS (Standard PAL/Security)
     "-g", "25",               // GOP = 1 second recovery
