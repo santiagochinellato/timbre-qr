@@ -15,6 +15,7 @@ const CameraFeed = dynamic(
 import { LiveCameraModal } from "@/components/features/live-camera-modal";
 import { useDoorbell } from "@/components/hooks/use-doorbell";
 import { DbAccessLog } from "@/lib/types";
+import { ConnectionStatus } from "@/components/ui/connection-status";
 
 interface DoorCardProps {
   unitId: string;
@@ -156,6 +157,9 @@ export function DoorCard({
           <p className="text-sm text-text-muted mt-1">
             {activeRing ? "Autoriza el acceso" : "Sistema de acceso activo"}
           </p>
+          <div className="mt-4 flex justify-center">
+            <ConnectionStatus />
+          </div>
         </div>
 
         {/* Actions */}

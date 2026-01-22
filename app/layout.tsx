@@ -5,6 +5,7 @@ import SmoothScroll from "@/components/layout/smooth-scroll";
 import { Toaster } from "@/components/ui/toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PushManager } from "@/components/push-manager";
+import { RealtimeProvider } from "@/components/providers/realtime-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,9 +48,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SmoothScroll>
-            <PushManager />
-            {children}
-            <Toaster />
+            <RealtimeProvider>
+              <PushManager />
+              {children}
+              <Toaster />
+            </RealtimeProvider>
           </SmoothScroll>
         </ThemeProvider>
       </body>

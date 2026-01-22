@@ -5,6 +5,7 @@ import { checkUnitStatus } from "@/app/actions/check-status";
 import { rejectCall } from "@/app/actions/reject-call";
 import { sendResponse } from "@/app/actions/send-response";
 import { DbAccessLog } from "@/lib/types";
+import { useRealtime } from "@/components/providers/realtime-provider";
 
 export function useDoorbell(
   unitId: string,
@@ -19,9 +20,11 @@ export function useDoorbell(
   const [responding, setResponding] = useState(false);
   const [responseSent, setResponseSent] = useState(false);
 
-  // SSE Effect
+  // Consume Global Realtime Context
+  const { lastEvent } = useRealtime();
+
+  // Initial Fetch on Mount (to get state if we missed events before load)
   useEffect(() => {
-    // Initial fetch to get current state (in case we missed an event or just loaded)
     const fetchInitialStatus = async () => {
         try {
             const res = await checkUnitStatus(unitId);
@@ -33,80 +36,47 @@ export function useDoorbell(
         }
     };
     fetchInitialStatus();
+  }, [unitId]);
 
-    // Setup SSE
-    const eventSource = new EventSource(`/api/stream?unitId=${unitId}`);
-    
-    eventSource.onopen = () => {
-        console.log("🟢 SSE Connected");
-    };
+  // React to Global Events
+  useEffect(() => {
+    if (!lastEvent) return;
+    if (lastEvent.unitId !== unitId) return; // Ignore events for other units
 
-    eventSource.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            
-            // Heartbeat check or connection msg
-            if (data.type === "CONNECTED") return;
+    // Handle Event
+    switch (lastEvent.type) {
+        case "RINGING":
+            router.refresh(); 
+            // Optimistic Update
+            // Note: payload has limited data, but enough for UI usually
+            setActiveRing({
+                id: lastEvent.payload?.logId as string,
+                unitId: lastEvent.unitId,
+                status: "ringing",
+                visitorPhotoUrl: (lastEvent.payload?.photoUrl as string) || null,
+                message: (lastEvent.payload?.message as string) || null,
+                timestamp: new Date(lastEvent.timestamp),
+                createdAt: new Date(lastEvent.timestamp),
+                ringCount: 1, 
+                responseMessage: null,
+                answeredAt: null,
+                rejectedAt: null,
+                openedByUserId: null
+            } as unknown as DbAccessLog);
+            break;
+        
+        case "REJECTED":
+        case "CALL_ENDED":
+        case "DOOR_OPENED":
+             setActiveRing(null);
+             router.refresh();
+             break;
 
-            console.log("📩 Event received:", data.type);
-
-            switch (data.type) {
-                case "RINGING":
-                    router.refresh(); // Refresh server components if needed
-                    // Fetch full log details if payload is partial, or just use payload if complete
-                    // For safety, we can rely on checkStatus or constructing from payload
-                    // Currently payload has partial data, so let's hit the server to be safe or optimize later.
-                    // For speed: use payload. For reliability: fetch. 
-                    // Let's optimistic update if possible, but payload only has IDs.
-                    // Let's just set activeRing if we have enough data, or fetch.
-                    // The payload has { logId, photoUrl, message }. Missing timestamp etc.
-                    // We can reconstruct a temporary object.
-                    setActiveRing({
-                        id: data.payload.logId,
-                        unitId: data.unitId,
-                        status: "ringing",
-                        visitorPhotoUrl: data.payload.photoUrl,
-                        message: data.payload.message,
-                        timestamp: new Date(data.timestamp),
-                        createdAt: new Date(data.timestamp), // approximate
-                        ringCount: 1, 
-                        // Add other required fields with defaults
-                        responseMessage: null,
-                        answeredAt: null,
-                        rejectedAt: null,
-                        openedByUserId: null
-                    } as unknown as DbAccessLog);
-                    break;
-                
-                case "REJECTED":
-                case "CALL_ENDED":
-                case "DOOR_OPENED":
-                     setActiveRing(null);
-                     router.refresh();
-                     break;
-
-                case "RESPONSE_SENT":
-                     router.refresh();
-                     // Optionally update local state if we want to show the message immediately
-                     break;
-            }
-
-        } catch (err) {
-            console.error("Error parsing SSE", err);
-        }
-    };
-
-    eventSource.onerror = (err) => {
-        console.error("🔴 SSE Error", err);
-        eventSource.close();
-        // Native EventSource does not auto-reconnect if closed cleanly, but usually does on network error.
-        // We can implement a manual retry if needed, but browser handles most network drops.
-    };
-
-    return () => {
-        eventSource.close();
-    };
-  }, [unitId, router]);
+        case "RESPONSE_SENT":
+             router.refresh();
+             break;
+    }
+  }, [lastEvent, unitId, router]);
 
   const handleReject = async () => {
     if (!activeRing) return;

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import Redis from "ioredis";
-
+import { auth } from "@/lib/auth";
+import { db } from "@/db";
 // Use a separate connection for subscriptions as 'ioredis' puts the client in subscriber mode
 const getSubscriberClient = () => {
   if (process.env.REDIS_URL) {
@@ -9,40 +10,56 @@ const getSubscriberClient = () => {
   return new Redis('redis://localhost:6379');
 };
 
+// 1. Rate limiting & Auth check
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const unitId = searchParams.get("unitId");
+  // 1. Authentication
+  const session = await auth();
+  if (!session || !session.user?.id) {
+      return new Response("Unauthorized", { status: 401 });
+  }
+  const userId = session.user.id;
 
-  // TODO: Add Authentication Check here (req.auth or similar)
-  // For now we assume the middleware/layout protects access or we add a quick check if needed.
-  // const session = await auth();
-  // if (!session) return new Response("Unauthorized", { status: 401 });
-
-  if (!unitId) {
-    return new Response("Missing unitId", { status: 400 });
+  // 2. Rate Limiting (10 req/min per user)
+  const { checkRateLimit } = await import("@/lib/rate-limit");
+  const limit = await checkRateLimit(`stream:${userId}`, 10, 60);
+  if (!limit.success) {
+      return new Response("Too Many Requests", { status: 429 });
   }
 
-  const channelName = `unit-${unitId}`;
-  
-  // Create a dedicated subscriber for this connection
+  // 3. Subscription Strategy: Subscribe to ALL user's units
+  // Fetch units associated with user
+  const userUnitsList = await db.query.userUnits.findMany({
+      where: (rel, { eq }) => eq(rel.userId, userId),
+      with: { unit: true }
+  });
+
+  const unitIds = userUnitsList.map(u => u.unitId);
+  const channels = unitIds.map(id => `unit-${id}`);
+
+  if (channels.length === 0) {
+      // Connect but no channels (idle stream)
+      console.log(`User ${userId} has no units to subscribe to.`);
+  }
+
   const subscriber = getSubscriberClient();
   
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
-
-      // 1. Helper to send data
       const sendEvent = (data: unknown) => {
         const payload = `data: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(encoder.encode(payload));
       };
 
-      // 2. Subscribe to Redis
-      await subscriber.subscribe(channelName);
+      // Subscribe to all channels
+      if (channels.length > 0) {
+          await subscriber.subscribe(...channels);
+      }
       
-      // 3. Listen for messages
       subscriber.on("message", (channel, message) => {
-        if (channel === channelName) {
+        // Since we only subscribed to units relevant to this user, we can forward everything.
+        // We add the source channel for checking on client if needed (though event already has unitId).
+        if (channels.includes(channel)) {
             try {
                 const json = JSON.parse(message);
                 sendEvent(json);
@@ -52,20 +69,15 @@ export async function GET(req: NextRequest) {
         }
       });
 
-      // 4. Send initial connection success logic
-      sendEvent({ type: "CONNECTED", unitId });
+      sendEvent({ type: "CONNECTED", userId, units: unitIds.length });
 
-      // 5. Heartbeat to keep connection alive (prevent timeouts)
       const heartbeat = setInterval(() => {
-        // Comment: is an empty comment line to keep connection open
         controller.enqueue(encoder.encode(": heartbeat\n\n"));
-      }, 15000); // 15 seconds
+      }, 15000);
 
-      // Cleanup when connection closes
       req.signal.addEventListener("abort", () => {
         clearInterval(heartbeat);
         subscriber.quit();
-        console.log(`Streaming closed for ${unitId}`);
       });
     },
     cancel() {
