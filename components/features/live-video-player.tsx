@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
+import { getStreamBaseUrl, getHttpStreamUrl } from "@/lib/utils/stream-url";
 
 export interface LiveVideoPlayerProps {
   streamUrl?: string;
@@ -13,20 +14,7 @@ export function LiveVideoPlayer({
   className = "",
 }: LiveVideoPlayerProps) {
   // 1. Obtenemos la URL base: Props > Env Var (CAMERA) > Env Var (WS) > Hardcoded Fallback
-  const envUrl =
-    process.env.NEXT_PUBLIC_WS_URL ||
-    "wss://video-service-production-44b4.up.railway.app";
-
-  // Debug Log (Simplificado)
-  if (typeof window !== "undefined" && !envUrl) {
-    console.warn("[LiveVideoPlayer] All env vars missing, using empty string.");
-  }
-
-  const rawStreamUrl = streamUrl || envUrl;
-
-  const streamBaseUrl = rawStreamUrl
-    .replace("wss://", "https://")
-    .replace("ws://", "http://");
+  const streamBaseUrl = getHttpStreamUrl(getStreamBaseUrl(streamUrl));
 
   // 2. Construimos la URL para el reproductor WebRTC nativo de Go2RTC
   // "webrtc.html" da la latencia más baja (menos de 0.5s)

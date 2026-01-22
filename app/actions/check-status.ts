@@ -4,6 +4,11 @@ import { db } from "@/db";
 import { accessLogs } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
+/**
+ * Checks the status of a unit (if it's ringing).
+ * Auto-expires stale rings older than 2 minutes.
+ * @param unitId UUID of the unit to check
+ */
 export async function checkUnitStatus(unitId: string) {
   try {
     // 1. Fetch the latest RINGING log (active)

@@ -5,6 +5,11 @@ import { accessLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Rejects an active call/ring.
+ * Updates the log status to "rejected" and revalidates the dashboard.
+ * @param logId UUID of the access log entry
+ */
 export async function rejectCall(logId: string) {
   try {
     await db

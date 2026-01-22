@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { ringDoorbell } from "../app/actions/ring-doorbell";
-import { db } from "../db";
-import { buildings } from "../db/schema";
+import { ringDoorbell } from "../../app/actions/ring-doorbell";
+import { db } from "../../db";
+import { buildings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";

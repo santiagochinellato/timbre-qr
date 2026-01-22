@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { db } from "../db";
-import { pushSubscriptions, users, userUnits, units } from "../db/schema";
+import { db } from "../../db";
+import { pushSubscriptions, users, userUnits, units } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 async function main() {

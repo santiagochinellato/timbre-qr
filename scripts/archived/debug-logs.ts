@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { db } from "../db";
-import { accessLogs, units, buildings } from "../db/schema";
+import { db } from "../../db";
+import { accessLogs, units, buildings } from "../../db/schema";
 import { eq, desc } from "drizzle-orm";
 
 async function checkLogs() {

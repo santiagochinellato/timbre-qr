@@ -3,120 +3,98 @@
 import { db } from "@/db";
 import { accessLogs, userUnits } from "@/db/schema";
 import { eq } from "drizzle-orm";
-// import { uploadVisitorSelfie } from '@/lib/storage/upload'; 
 import { sendPushNotification } from "@/actions/push-actions";
+import { RingDoorbellSchema } from "@/lib/validations";
+// import { uploadVisitorSelfie } from '@/lib/storage/upload'; 
 
-// Rate limiting constraints moved to Redis logic
-// const NOTIFICATION_LIMIT = 3; 
-// const NOTIFICATION_WINDOW = 60 * 1000;
+/**
+ * Handles the "Ring Doorbell" action from the visitor page.
+ * Validates inputs, handles image uploads, rate limits, creates logs, and sends push notifications.
+ * @param prevState Previous form state (unused)
+ * @param formData FormData containing 'unitId', 'message', and optional 'image'
+ */
+export async function ringDoorbell(prevState: unknown, formData: FormData) {
+  // 1. Extract & Validate Input
+  const rawData = {
+    unitId: (formData.get("slug") || formData.get("unit")) as string,
+    message: (formData.get("message") as string) || undefined,
+  };
 
-export async function ringDoorbell(prevState: any, formData: FormData) {
-    const imageFile = formData.get("image") as File;
-    const unitId = (formData.get("slug") || formData.get("unit")) as string;
-    const message = formData.get("message") as string;
-    
-    let photoUrl = null;
+  const validation = RingDoorbellSchema.safeParse(rawData);
 
-    // 1. Image Handling
-    console.log(`[RingDoorbell] Received ring request for unit ${unitId}`);
-    
-    // Log all keys
-    const keys = Array.from(formData.keys());
-    console.log(`[RingDoorbell] FormData Keys: ${keys.join(", ")}`);
+  if (!validation.success) {
+    return { success: false, message: "Datos inválidos", error: validation.error.format() };
+  }
 
-    const imageEntry = formData.get("image");
-    console.log(`[RingDoorbell] Image Entry Type: ${typeof imageEntry}, Is File? ${imageEntry instanceof File}`);
+  const { unitId, message } = validation.data;
+  const imageEntry = formData.get("image");
+  let photoUrl: string | null = null;
 
-    if (imageEntry instanceof File) {
-        console.log(`[RingDoorbell] File details: name=${imageEntry.name}, size=${imageEntry.size}, type=${imageEntry.type}`);
-        
-        if (imageEntry.size > 0) {
-            try {
-                console.log("[RingDoorbell] Attempting upload...");
-                const { uploadFile } = await import("@/lib/storage");
-                photoUrl = await uploadFile(imageEntry);
-                console.log(`[RingDoorbell] Upload success. URL: ${photoUrl}`);
-            } catch (error) {
-                console.error("❌ Failed to save image:", error);
-            }
-        } else {
-             console.warn("[RingDoorbell] File size is 0");
-        }
-    } else {
-        console.warn("[RingDoorbell] 'image' is not a File instance");
-    }
-
+  // 2. Handle Image Upload
+  if (imageEntry instanceof File && imageEntry.size > 0) {
     try {
-        const unitResult = await db.query.units.findFirst({
-            where: (u, { eq }) => eq(u.id, unitId)
-        });
-        
-        if (!unitResult) {
-            return { success: false, message: "Unit not found" };
-        }
-
-
-        // 2. Anti-Spam / Rate Limiting (Redis Optimized)
-        const { checkRateLimit } = await import("@/lib/rate-limit");
-        
-        // Limit: 5 requests per 60 seconds per Unit
-        const limitResult = await checkRateLimit(unitId, 5, 60);
-
-        if (!limitResult.success) {
-             console.warn(`Rate limit exceeded for unit ${unitResult.label}`);
-             return { success: false, message: "Espere un momento antes de volver a llamar." };
-        }
-
-
-        // 3. Insert Log
-        const [newLog] = await db
-            .insert(accessLogs)
-            .values({
-                unitId: unitId,
-                visitorPhotoUrl: photoUrl,
-                message: message || null, // Store the fallback message
-                status: "ringing",
-            })
-            .returning();
-
-        // 4. Find Associated Users
-        const associatedUsers = await db
-            .select({ userId: userUnits.userId })
-            .from(userUnits)
-            .where(eq(userUnits.unitId, unitId));
-
-        if (associatedUsers.length === 0) {
-            return { success: true, message: "Timbre tocado (Sin residentes activos)" };
-        }
-
-        // 5. Build Notification Content
-        let title = "Timbre Tocado";
-        let body = `Alguien está en la puerta de ${unitResult.label}`;
-        
-        if (!photoUrl) {
-            title = "⚠️ Alerta: Timbre sin cámara";
-            body = message 
-                ? `Mensaje del visitante:\n"${message}"` 
-                : "Alguien tocó el timbre pero no compartió imagen.";
-        }
-
-        // 6. Send Push Notifications
-        const notificationPromises = associatedUsers.map(async (u) => {
-            if (u.userId) {
-                await sendPushNotification(
-                    u.userId,
-                    title,
-                    body,
-                    `/dashboard`
-                );
-            }
-        });
-
-        await Promise.all(notificationPromises);
-
-        return { success: true, message: "Llamando...", logId: newLog.id };
+      const { uploadFile } = await import("@/lib/storage");
+      photoUrl = await uploadFile(imageEntry);
     } catch (error) {
-        console.error("Error ringing doorbell:", error);
-        return { success: false, message: "Error interno del servidor" };
+      console.error("❌ Failed to save image:", error);
+      // We continue even if image fails, just logging it
     }
+  }
+
+  try {
+    const unitResult = await db.query.units.findFirst({
+        where: (u, { eq }) => eq(u.id, unitId)
+    });
+    
+    if (!unitResult) {
+        return { success: false, message: "Unit not found" };
+    }
+
+    // 3. Anti-Spam / Rate Limiting
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+    const limitResult = await checkRateLimit(unitId, 5, 60);
+
+    if (!limitResult.success) {
+         return { success: false, message: "Espere un momento antes de volver a llamar." };
+    }
+
+    // 4. Insert Log
+    const [newLog] = await db
+        .insert(accessLogs)
+        .values({
+            unitId: unitId,
+            visitorPhotoUrl: photoUrl,
+            message: message || null,
+            status: "ringing",
+        })
+        .returning();
+
+    // 5. Find Associated Users
+    const associatedUsers = await db
+        .select({ userId: userUnits.userId })
+        .from(userUnits)
+        .where(eq(userUnits.unitId, unitId));
+
+    if (associatedUsers.length === 0) {
+        return { success: true, message: "Timbre tocado (Sin residentes activos)", logId: newLog.id };
+    }
+
+    // 6. Build & Send Notifications
+    const title = !photoUrl ? "⚠️ Alerta: Timbre sin cámara" : "Timbre Tocado";
+    const body = !photoUrl 
+        ? (message ? `Mensaje: "${message}"` : "Alguien tocó el timbre (sin foto)")
+        : `Alguien está en la puerta de ${unitResult.label}`;
+
+    await Promise.all(associatedUsers.map(async (u) => {
+        if (u.userId) {
+            await sendPushNotification(u.userId, title, body, `/dashboard`);
+        }
+    }));
+
+    return { success: true, message: "Llamando...", logId: newLog.id };
+
+  } catch (error) {
+    console.error("Error ringing doorbell:", error);
+    return { success: false, message: "Error interno del servidor" };
+  }
 }

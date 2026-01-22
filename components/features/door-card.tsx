@@ -5,19 +5,13 @@ import { useRouter } from "next/navigation";
 import { Unlock, X, MessageSquare, Camera } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
 import { CameraFeed } from "./camera-feed";
-// import { ServerlessCameraView } from "@/components/features/serverless-camera-view";
-import { LiveCameraModal } from "@/components/features/live-camera-modal"; // Import
-import { sendResponse } from "@/app/actions/send-response";
-import { checkUnitStatus } from "@/app/actions/check-status";
-import { rejectCall } from "@/app/actions/reject-call";
-import { toast } from "sonner";
-import { accessLogs } from "@/db/schema";
-
-type LogType = typeof accessLogs.$inferSelect;
+import { LiveCameraModal } from "@/components/features/live-camera-modal";
+import { useDoorbell } from "@/components/hooks/use-doorbell";
+import { DbAccessLog } from "@/lib/types";
 
 interface DoorCardProps {
   unitId: string;
-  initialLog: LogType | undefined | null;
+  initialLog: DbAccessLog | undefined | null;
   unitMqttTopic: string | null;
   buildingMqttTopic: string | null;
   cameraUrl?: string | null;
@@ -30,8 +24,23 @@ export function DoorCard({
   buildingMqttTopic,
   cameraUrl,
 }: DoorCardProps) {
-  // Fallback to env var if database URL is missing OR if it's not a WebSocket/HTTP URL
-  // We accept ws, wss, http, https because Go2RTC uses http/https for WebRTC iframe
+  const router = useRouter();
+
+  // Custom Hook for Logic
+  const {
+    activeRing,
+    rejecting,
+    responding,
+    responseSent,
+    handleReject,
+    handleSendResponse,
+    resetResponseSent,
+  } = useDoorbell(unitId, initialLog);
+
+  // UI State for Camera/Photo View
+  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
+
+  // Fallback to env var logic (UI specific)
   const isInvalidDbUrl =
     !cameraUrl ||
     (!cameraUrl.startsWith("ws") && !cameraUrl.startsWith("http"));
@@ -39,104 +48,29 @@ export function DoorCard({
   const effectiveCameraUrl = !isInvalidDbUrl
     ? cameraUrl
     : process.env.NEXT_PUBLIC_WS_URL ||
-      "wss://video-service-production-44b4.up.railway.app"; // Hardcoded Fallback added here too
+      "wss://video-service-production-44b4.up.railway.app";
 
-  if (typeof window !== "undefined") {
-    console.log("[DoorCard] Database URL:", cameraUrl);
-    console.log("[DoorCard] Is Invalid (Must be WS):", isInvalidDbUrl);
-    console.log("[DoorCard] Env Var URL:", process.env.NEXT_PUBLIC_WS_URL);
-    console.log("[DoorCard] Effective URL:", effectiveCameraUrl);
-  }
+  // View Mode Logic: Derived with User Override
+  const [userOverrideMode, setUserOverrideMode] = useState<
+    "camera" | "photo" | null
+  >(null);
 
-  const router = useRouter();
-  const [activeRing, setActiveRing] = useState<LogType | null | undefined>(
-    initialLog?.status === "ringing" ? initialLog : null,
-  );
-  const [rejecting, setRejecting] = useState(false);
-  const [responding, setResponding] = useState(false);
+  const viewMode =
+    userOverrideMode || (activeRing?.visitorPhotoUrl ? "photo" : "camera");
+
+  const setViewMode = (mode: "camera" | "photo") => setUserOverrideMode(mode);
+
+  // Reset override on new ring
+  useEffect(() => {
+    setUserOverrideMode(null);
+  }, [activeRing?.id]);
+
+  // Reset response sent status when activeRing changes (handled mostly in hook but clean up UI if needed)
+  useEffect(() => {
+    if (!activeRing) resetResponseSent();
+  }, [activeRing, resetResponseSent]);
+
   const [customResponse, setCustomResponse] = useState("");
-  const [responseSent, setResponseSent] = useState(false);
-  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false); // New State
-
-  // View Mode: 'camera' | 'photo'. Default depends on config.
-  // If we have cameraUrl AND visitorPhoto, default to photo (to see who ringed), but allow toggle.
-  // If only cameraUrl, default camera.
-  // If only photo, default photo.
-  const [viewMode, setViewMode] = useState<"camera" | "photo">(
-    initialLog?.visitorPhotoUrl ? "photo" : "camera",
-  );
-
-  // Auto-switch view on new ring
-  useEffect(() => {
-    if (activeRing?.visitorPhotoUrl) {
-      setViewMode("photo");
-    } else if (effectiveCameraUrl) {
-      setViewMode("camera");
-    }
-  }, [activeRing, effectiveCameraUrl]);
-
-  // Polling Effect
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const res = await checkUnitStatus(unitId);
-
-      if (res.isRinging && res.log) {
-        // Found a ringing log
-        // Update if it's a NEW log OR if we currently have no active ring
-        if (!activeRing || activeRing.id !== res.log.id) {
-          setActiveRing(res.log);
-          router.refresh();
-        }
-      } else {
-        // No ringing log found on server
-        // If we currently show a ring, we should clear it (it was handled or timed out)
-        if (activeRing) {
-          setActiveRing(null);
-          router.refresh();
-        }
-      }
-    }, 2000); // Poll every 2 seconds for faster updates
-
-    return () => clearInterval(interval);
-  }, [unitId, activeRing, router]);
-
-  const handleReject = async () => {
-    if (!activeRing) return;
-    setRejecting(true);
-    try {
-      const res = await rejectCall(activeRing.id);
-      if (res.success) {
-        toast.success("Llamada rechazada");
-        setActiveRing(null); // Immediate UI update
-        router.refresh();
-      } else {
-        toast.error("Error al rechazar");
-      }
-    } catch {
-      toast.error("Error de conexión");
-    } finally {
-      setRejecting(false);
-    }
-  };
-
-  const handleSendResponse = async (msg: string) => {
-    if (!activeRing) return;
-    setResponding(true);
-    try {
-      const res = await sendResponse(activeRing.id, msg);
-      if (res.success) {
-        toast.success("Mensaje enviado");
-        setResponseSent(true);
-        setCustomResponse("");
-      } else {
-        toast.error("Error al enviar mensaje");
-      }
-    } catch {
-      toast.error("Error de conexión");
-    } finally {
-      setResponding(false);
-    }
-  };
 
   return (
     <div className="relative bg-bg-card backdrop-blur-xl border border-border-subtle rounded-2xl overflow-hidden shadow-sm transition-all duration-500">
@@ -152,24 +86,21 @@ export function DoorCard({
         {activeRing ? (
           <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-inner border border-border-subtle dark:border-white/10 group">
             {viewMode === "camera" && effectiveCameraUrl ? (
-              /* Fixed Camera Feed (Legacy/Railway) */
               <CameraFeed url={effectiveCameraUrl} className="w-full h-full" />
             ) : viewMode === "photo" && activeRing?.visitorPhotoUrl ? (
-              /* Visitor Photo (Snapshot) */
               <img
                 src={activeRing.visitorPhotoUrl}
                 className="w-full h-full object-cover"
                 alt="Visitor"
               />
             ) : (
-              /* Placeholder / Logic while ringing if no photo */
               <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-zinc-800 animate-pulse flex items-center justify-center">
                   <Camera className="text-zinc-500 w-8 h-8" />
                 </div>
               </div>
             )}
-            {/* Toggle Button for Hybrid (PH) Scenarios - NOW OPENS LIVE MODAL */}
+
             {effectiveCameraUrl && (
               <div className="absolute top-2 right-2 z-20">
                 <button
@@ -180,9 +111,9 @@ export function DoorCard({
                 </button>
               </div>
             )}
-            {/* Visual Softening Overlay */}
+
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
-            {/* Visitor Message Overlay */}
+
             {activeRing.message && (
               <div className="absolute bottom-4 left-4 right-4 animate-in slide-in-from-bottom-2 fade-in duration-500">
                 <div className="bg-black/40 backdrop-blur-md border border-white/10 p-3 rounded-lg">
@@ -219,21 +150,16 @@ export function DoorCard({
         {/* Actions */}
         {activeRing && (
           <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Option 1: Open Main Gate (If configured) */}
             {buildingMqttTopic && (
               <OpenDoorControl
                 key="main-gate"
                 logId={activeRing.id}
                 type="building"
                 label="Entrada Principal"
-                onOpenSuccess={() => {
-                  setActiveRing(null);
-                  router.refresh();
-                }}
+                onOpenSuccess={() => router.refresh()}
               />
             )}
 
-            {/* Option 2: Open Unit Door (If configured) */}
             {unitMqttTopic && (
               <OpenDoorControl
                 key="unit-door"
@@ -243,24 +169,17 @@ export function DoorCard({
                   buildingMqttTopic ? "Entrada Departamento" : "Entrada Única"
                 }
                 className="mt-2"
-                onOpenSuccess={() => {
-                  setActiveRing(null);
-                  router.refresh();
-                }}
+                onOpenSuccess={() => router.refresh()}
               />
             )}
 
-            {/* Fallback if no specific configuration (Legacy behavior) */}
             {!buildingMqttTopic && !unitMqttTopic && (
               <OpenDoorControl
                 key="default-door"
                 logId={activeRing.id}
                 type="default"
                 label="Entrada Principal"
-                onOpenSuccess={() => {
-                  setActiveRing(null);
-                  router.refresh();
-                }}
+                onOpenSuccess={() => router.refresh()}
               />
             )}
 
