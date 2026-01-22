@@ -91,6 +91,19 @@ export async function ringDoorbell(prevState: unknown, formData: FormData) {
         }
     }));
 
+    // 7. Publish Real-time Event
+    const { publishEvent } = await import("@/lib/events");
+    await publishEvent(`unit-${unitId}`, {
+        type: "RINGING",
+        timestamp: Date.now(),
+        unitId,
+        payload: {
+            logId: newLog.id,
+            photoUrl,
+            message
+        }
+    });
+
     return { success: true, message: "Llamando...", logId: newLog.id };
 
   } catch (error) {

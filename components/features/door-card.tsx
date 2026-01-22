@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Unlock, X, MessageSquare, Camera } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
-import { CameraFeed } from "./camera-feed";
+import dynamic from "next/dynamic";
+const CameraFeed = dynamic(
+  () => import("./camera-feed").then((mod) => mod.CameraFeed),
+  {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-zinc-900 animate-pulse" />,
+  },
+);
 import { LiveCameraModal } from "@/components/features/live-camera-modal";
 import { useDoorbell } from "@/components/hooks/use-doorbell";
 import { DbAccessLog } from "@/lib/types";
@@ -60,12 +67,16 @@ export function DoorCard({
 
   const setViewMode = (mode: "camera" | "photo") => setUserOverrideMode(mode);
 
-  // Reset override on new ring
-  useEffect(() => {
+  // Reset override on new ring using derived state pattern
+  const [prevRingId, setPrevRingId] = useState<string | undefined>(
+    activeRing?.id,
+  );
+  if (activeRing?.id !== prevRingId) {
+    setPrevRingId(activeRing?.id);
     setUserOverrideMode(null);
-  }, [activeRing?.id]);
+  }
 
-  // Reset response sent status when activeRing changes (handled mostly in hook but clean up UI if needed)
+  // Reset response sent status when activeRing changes
   useEffect(() => {
     if (!activeRing) resetResponseSent();
   }, [activeRing, resetResponseSent]);

@@ -19,30 +19,94 @@ export function useDoorbell(
   const [responding, setResponding] = useState(false);
   const [responseSent, setResponseSent] = useState(false);
 
-  // Polling Effect
+  // SSE Effect
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await checkUnitStatus(unitId);
-
-        if (res.isRinging && res.log) {
-          if (!activeRing || activeRing.id !== res.log.id) {
-            setActiveRing(res.log as DbAccessLog);
-            router.refresh();
-          }
-        } else {
-          if (activeRing) {
-            setActiveRing(null);
-            router.refresh();
-          }
+    // Initial fetch to get current state (in case we missed an event or just loaded)
+    const fetchInitialStatus = async () => {
+        try {
+            const res = await checkUnitStatus(unitId);
+            if (res.isRinging && res.log) {
+                 setActiveRing(res.log as DbAccessLog);
+            }
+        } catch (e) {
+            console.error("Initial status check failed", e);
         }
-      } catch (error) {
-        console.error("Polling error:", error);
-      }
-    }, 2000);
+    };
+    fetchInitialStatus();
 
-    return () => clearInterval(interval);
-  }, [unitId, activeRing, router]);
+    // Setup SSE
+    const eventSource = new EventSource(`/api/stream?unitId=${unitId}`);
+    
+    eventSource.onopen = () => {
+        console.log("🟢 SSE Connected");
+    };
+
+    eventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            
+            // Heartbeat check or connection msg
+            if (data.type === "CONNECTED") return;
+
+            console.log("📩 Event received:", data.type);
+
+            switch (data.type) {
+                case "RINGING":
+                    router.refresh(); // Refresh server components if needed
+                    // Fetch full log details if payload is partial, or just use payload if complete
+                    // For safety, we can rely on checkStatus or constructing from payload
+                    // Currently payload has partial data, so let's hit the server to be safe or optimize later.
+                    // For speed: use payload. For reliability: fetch. 
+                    // Let's optimistic update if possible, but payload only has IDs.
+                    // Let's just set activeRing if we have enough data, or fetch.
+                    // The payload has { logId, photoUrl, message }. Missing timestamp etc.
+                    // We can reconstruct a temporary object.
+                    setActiveRing({
+                        id: data.payload.logId,
+                        unitId: data.unitId,
+                        status: "ringing",
+                        visitorPhotoUrl: data.payload.photoUrl,
+                        message: data.payload.message,
+                        timestamp: new Date(data.timestamp),
+                        createdAt: new Date(data.timestamp), // approximate
+                        ringCount: 1, 
+                        // Add other required fields with defaults
+                        responseMessage: null,
+                        answeredAt: null,
+                        rejectedAt: null,
+                        openedByUserId: null
+                    } as unknown as DbAccessLog);
+                    break;
+                
+                case "REJECTED":
+                case "CALL_ENDED":
+                case "DOOR_OPENED":
+                     setActiveRing(null);
+                     router.refresh();
+                     break;
+
+                case "RESPONSE_SENT":
+                     router.refresh();
+                     // Optionally update local state if we want to show the message immediately
+                     break;
+            }
+
+        } catch (err) {
+            console.error("Error parsing SSE", err);
+        }
+    };
+
+    eventSource.onerror = (err) => {
+        console.error("🔴 SSE Error", err);
+        eventSource.close();
+        // Native EventSource does not auto-reconnect if closed cleanly, but usually does on network error.
+        // We can implement a manual retry if needed, but browser handles most network drops.
+    };
+
+    return () => {
+        eventSource.close();
+    };
+  }, [unitId, router]);
 
   const handleReject = async () => {
     if (!activeRing) return;

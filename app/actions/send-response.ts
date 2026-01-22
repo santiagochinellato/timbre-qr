@@ -17,10 +17,21 @@ export async function sendResponse(logId: string, message: string) {
       return { success: false, error: "Missing required fields" };
     }
 
-    await db
+    const [updatedLog] = await db
       .update(accessLogs)
       .set({ responseMessage: message })
-      .where(eq(accessLogs.id, logId));
+      .where(eq(accessLogs.id, logId))
+      .returning({ unitId: accessLogs.unitId });
+
+    if (updatedLog) {
+        const { publishEvent } = await import("@/lib/events");
+        await publishEvent(`unit-${updatedLog.unitId}`, {
+            type: "RESPONSE_SENT",
+            timestamp: Date.now(),
+            unitId: updatedLog.unitId,
+            payload: { logId, message }
+        });
+    }
 
     revalidatePath("/dashboard");
     return { success: true };

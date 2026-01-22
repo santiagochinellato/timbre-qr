@@ -12,10 +12,21 @@ import { revalidatePath } from "next/cache";
  */
 export async function rejectCall(logId: string) {
   try {
-    await db
+    const [updatedLog] = await db
       .update(accessLogs)
       .set({ status: "rejected" })
-      .where(eq(accessLogs.id, logId));
+      .where(eq(accessLogs.id, logId))
+      .returning({ unitId: accessLogs.unitId });
+
+    if (updatedLog) {
+        const { publishEvent } = await import("@/lib/events");
+        await publishEvent(`unit-${updatedLog.unitId}`, {
+            type: "REJECTED",
+            timestamp: Date.now(),
+            unitId: updatedLog.unitId,
+            payload: { logId }
+        });
+    }
 
     revalidatePath("/dashboard");
     return { success: true };

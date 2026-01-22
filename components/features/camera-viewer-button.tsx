@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { Camera, X, TriangleAlert } from "lucide-react";
 import { createPortal } from "react-dom";
-import { LiveVideoPlayer } from "./live-video-player";
+import dynamic from "next/dynamic";
+const LiveVideoPlayer = dynamic(
+  () => import("./live-video-player").then((mod) => mod.LiveVideoPlayer),
+  {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-black animate-pulse" />,
+  },
+);
 
 export function CameraViewerButton() {
   const [isOpen, setIsOpen] = useState(false);
