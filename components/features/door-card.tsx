@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Unlock, X, MessageSquare, Camera } from "lucide-react";
 import OpenDoorControl from "@/components/features/open-door-control";
@@ -66,8 +67,6 @@ export function DoorCard({
   const viewMode =
     userOverrideMode || (activeRing?.visitorPhotoUrl ? "photo" : "camera");
 
-  const setViewMode = (mode: "camera" | "photo") => setUserOverrideMode(mode);
-
   // Reset override on new ring using derived state pattern
   const [prevRingId, setPrevRingId] = useState<string | undefined>(
     activeRing?.id,
@@ -100,9 +99,10 @@ export function DoorCard({
             {viewMode === "camera" && effectiveCameraUrl ? (
               <CameraFeed url={effectiveCameraUrl} className="w-full h-full" />
             ) : viewMode === "photo" && activeRing?.visitorPhotoUrl ? (
-              <img
+              <Image
                 src={activeRing.visitorPhotoUrl}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
                 alt="Visitor"
               />
             ) : (

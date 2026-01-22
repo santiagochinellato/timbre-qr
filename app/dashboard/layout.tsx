@@ -1,13 +1,14 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PushManager } from "@/components/push-manager";
-import { LiveStatusPoller } from "@/components/features/live-status-poller";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { PushPermissionBanner } from "@/components/features/push-permission-banner";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Home, Key, DoorOpen, Settings, LifeBuoy } from "lucide-react";
 import Image from "next/image";
+
+export const experimental_ppr = true;
 
 export default async function DashboardLayout({
   children,
@@ -47,7 +48,7 @@ export default async function DashboardLayout({
             label="Actividad"
           />
           <NavItem href="/dashboard/support" icon={LifeBuoy} label="Soporte" />
-          {(session.user as any).role === "admin" && (
+          {(session.user as { role?: string }).role === "admin" && (
             <NavItem
               href="/dashboard/settings"
               icon={Settings}
@@ -82,7 +83,6 @@ export default async function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 relative flex flex-col min-h-0 w-full lg:max-w-[calc(100vw-16rem)] overflow-y-auto">
         <PushManager />
-        <LiveStatusPoller />
         {/* Soft Permission Prompt */}
         <PushPermissionBanner />
 
@@ -91,7 +91,7 @@ export default async function DashboardLayout({
 
       {/* Mobile/Tablet Bottom Nav */}
       <div className="lg:hidden">
-        <BottomNav role={(session.user as any).role} />
+        <BottomNav role={(session.user as { role?: string }).role} />
       </div>
     </div>
   );
